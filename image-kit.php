@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Image Kit
  * Description: Tools for cleaning up large WordPress media libraries — find broken images, upgrade downsized variants, reorganize uploads, remove unused files, and detect low-resolution images.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: David Gilbert
  * Requires PHP: 7.4
  * Requires at least: 5.0
@@ -12,7 +12,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'IMAGE_KIT_VERSION', '1.0.0' );
+define( 'IMAGE_KIT_VERSION', '1.0.1' );
 define( 'IMAGE_KIT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'IMAGE_KIT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'IMAGE_KIT_PLUGIN_FILE', __FILE__ );
