@@ -1,0 +1,729 @@
+/* Image Kit — Unified Admin Styles */
+
+#image-kit-app {
+	max-width: 960px;
+}
+
+/* ── Tab navigation ── */
+
+.ik-tabs {
+	display: flex;
+	gap: 0;
+	margin: 16px 0 0;
+	border-bottom: 1px solid #c3c4c7;
+}
+
+#image-kit-app .ik-tab {
+	padding: 8px 16px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #50575e;
+	background: #f0f0f1;
+	border: 1px solid #c3c4c7;
+	border-bottom: none;
+	border-radius: 4px 4px 0 0;
+	cursor: pointer;
+	margin-right: 4px;
+	margin-bottom: -1px;
+	line-height: 1.4;
+	box-shadow: none;
+}
+
+#image-kit-app .ik-tab:hover {
+	background: #fff;
+	color: #2271b1;
+}
+
+#image-kit-app .ik-tab.active {
+	background: #fff;
+	color: #1d2327;
+	border-bottom: 1px solid #fff;
+}
+
+#image-kit-app .ik-tab:focus {
+	outline: none;
+	box-shadow: none;
+}
+
+.ik-tab-content {
+	padding-top: 16px;
+}
+
+/* ── Wizard step indicators ── */
+
+.ik-wizard-steps {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 24px;
+	padding: 12px 16px;
+	background: #f0f0f1;
+	border-radius: 4px;
+}
+
+.ik-step {
+	padding: 6px 12px;
+	border-radius: 3px;
+	font-weight: 600;
+	font-size: 13px;
+	color: #50575e;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+}
+
+.ik-step.active {
+	background: #2271b1;
+	color: #fff;
+	border-color: #2271b1;
+}
+
+.ik-step.completed {
+	background: #00a32a;
+	color: #fff;
+	border-color: #00a32a;
+}
+
+.ik-step-arrow {
+	color: #8c8f94;
+	font-size: 16px;
+}
+
+/* ── Panels ── */
+
+.ik-panel {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	padding: 16px 20px;
+	margin-bottom: 16px;
+	border-radius: 4px;
+}
+
+.ik-panel h2 {
+	margin-top: 0;
+	padding: 0;
+	font-size: 16px;
+}
+
+.ik-panel-reset {
+	background: #f6f7f7;
+	border-color: #dcdcde;
+}
+
+/* ── Progress bar ── */
+
+.ik-progress {
+	margin: 12px 0;
+}
+
+.ik-progress-bar {
+	width: 100%;
+	height: 24px;
+	background: #dcdcde;
+	border-radius: 3px;
+	overflow: hidden;
+	margin-bottom: 6px;
+}
+
+.ik-progress-fill {
+	height: 100%;
+	background: #2271b1;
+	width: 0%;
+	transition: width 0.3s ease;
+	border-radius: 3px;
+}
+
+.ik-progress-text {
+	font-size: 13px;
+	color: #50575e;
+}
+
+/* ── Tables ── */
+
+.ik-col-check {
+	width: 50px;
+	text-align: center;
+}
+
+.ik-col-thumb {
+	width: 60px;
+	text-align: center;
+}
+
+.ik-thumb {
+	width: 48px;
+	height: 48px;
+	object-fit: cover;
+	border-radius: 3px;
+	border: 1px solid #dcdcde;
+}
+
+.ik-no-thumb {
+	color: #8c8f94;
+}
+
+#image-kit-app table td {
+	vertical-align: middle;
+}
+
+.ik-path {
+	font-family: monospace;
+	font-size: 12px;
+	word-break: break-all;
+}
+
+/* ── Status badges ── */
+
+.ik-status {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.ik-status-success {
+	background: #00a32a;
+	color: #fff;
+}
+
+.ik-status-error {
+	background: #d63638;
+	color: #fff;
+}
+
+.ik-status-warning {
+	background: #dba617;
+	color: #fff;
+}
+
+.ik-status-info {
+	background: #72aee6;
+	color: #fff;
+}
+
+/* ── Result summary banners ── */
+
+.ik-result {
+	padding: 12px 16px;
+	border-radius: 3px;
+	margin: 12px 0;
+	font-weight: 600;
+}
+
+.ik-result-success {
+	background: #d4edda;
+	color: #155724;
+	border: 1px solid #c3e6cb;
+}
+
+.ik-result-info {
+	background: #d1ecf1;
+	color: #0c5460;
+	border: 1px solid #bee5eb;
+}
+
+.ik-result-error {
+	background: #f8d7da;
+	color: #721c24;
+	border: 1px solid #f5c6cb;
+}
+
+/* ── Log panels ── */
+
+.ik-log {
+	max-height: 400px;
+	overflow-y: auto;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	padding: 8px 12px;
+	font-size: 13px;
+	font-family: monospace;
+	background: #f6f7f7;
+	margin: 12px 0;
+}
+
+.ik-log-entry {
+	padding: 2px 0;
+	border-bottom: 1px solid #e8e8e8;
+}
+
+.ik-log-entry:last-child {
+	border-bottom: none;
+}
+
+.ik-log-success {
+	color: #155724;
+}
+
+.ik-log-error {
+	color: #d63638;
+}
+
+/* ── Collision/warning icon ── */
+
+.ik-collision {
+	color: #dba617;
+	cursor: help;
+	font-size: 14px;
+}
+
+/* ── Select all ── */
+
+.ik-selected-count {
+	font-size: 13px;
+	color: #50575e;
+}
+
+/* ── Pagination ── */
+
+.ik-page-btn {
+	margin: 0 2px;
+}
+
+.ik-page-btn.current {
+	font-weight: bold;
+	text-decoration: underline;
+}
+
+/* ── Disabled buttons ── */
+
+button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* ── Sub-tabs within a module ── */
+
+.ik-sub-tabs {
+	display: flex;
+	gap: 0;
+	margin: 0 0 16px;
+	border-bottom: 1px solid #dcdcde;
+}
+
+.ik-sub-tab {
+	padding: 6px 14px;
+	font-size: 13px;
+	font-weight: 600;
+	color: #50575e;
+	background: transparent;
+	border: 1px solid transparent;
+	border-bottom: none;
+	border-radius: 3px 3px 0 0;
+	cursor: pointer;
+	margin-right: 2px;
+	margin-bottom: -1px;
+}
+
+.ik-sub-tab:hover {
+	color: #2271b1;
+}
+
+.ik-sub-tab.active {
+	background: #fff;
+	color: #1d2327;
+	border-color: #dcdcde;
+	border-bottom: 1px solid #fff;
+}
+
+/* ── Image Upgrader module ── */
+
+.ik-iu-counters {
+	display: flex;
+	gap: 25px;
+	margin: 10px 0;
+	font-size: 13px;
+}
+
+.ik-iu-log-panel {
+	max-height: 300px;
+	overflow-y: auto;
+	background: #23282d;
+	color: #ccc;
+	font-family: monospace;
+	font-size: 12px;
+	padding: 10px;
+	border-radius: 3px;
+	margin: 10px 0;
+}
+
+.ik-iu-log-line {
+	padding: 2px 0;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ik-iu-preview-table {
+	margin-top: 15px;
+}
+
+.ik-iu-edit-icon {
+	text-decoration: none;
+	color: #999;
+	vertical-align: middle;
+}
+
+.ik-iu-edit-icon:hover {
+	color: #0073aa;
+}
+
+.ik-iu-edit-icon .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+}
+
+.ik-iu-sortable {
+	cursor: pointer;
+	user-select: none;
+}
+
+.ik-iu-sortable:hover {
+	color: #0073aa;
+}
+
+.ik-iu-preview-table .ik-iu-expand-toggle {
+	cursor: pointer;
+	font-size: 14px;
+	padding: 2px 6px;
+	text-decoration: none;
+}
+
+.ik-iu-preview-detail > td {
+	padding: 15px 20px;
+	background: #f9f9f9;
+}
+
+.ik-iu-replacement-details {
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+}
+
+.ik-iu-replacement-row {
+	padding: 10px;
+	background: #fff;
+	border: 1px solid #e5e5e5;
+	border-radius: 3px;
+}
+
+.ik-iu-exclude-label {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: 600;
+	font-size: 12px;
+}
+
+.ik-iu-before-after {
+	display: flex;
+	align-items: flex-start;
+	gap: 15px;
+	flex-wrap: wrap;
+}
+
+.ik-iu-before,
+.ik-iu-after {
+	flex: 1;
+	min-width: 200px;
+}
+
+.ik-iu-arrow {
+	display: flex;
+	align-items: center;
+	font-size: 24px;
+	color: #0073aa;
+	padding-top: 30px;
+}
+
+.ik-iu-thumbnail {
+	max-width: 150px;
+	max-height: 100px;
+	border: 1px solid #ddd;
+	border-radius: 2px;
+	display: block;
+	margin-bottom: 5px;
+}
+
+.ik-iu-url-label {
+	font-size: 11px;
+	color: #666;
+	word-break: break-all;
+	margin-top: 3px;
+}
+
+.ik-iu-dim-label {
+	font-size: 11px;
+	color: #888;
+	margin-top: 2px;
+}
+
+.ik-iu-type-label,
+.ik-iu-variant-label {
+	font-size: 11px;
+	color: #0073aa;
+	margin-top: 2px;
+}
+
+.ik-iu-preview-actions {
+	margin-top: 20px;
+	display: flex;
+	gap: 10px;
+}
+
+.ik-iu-applied {
+	opacity: 0.5;
+}
+
+.ik-iu-muted {
+	opacity: 0.5;
+}
+
+/* Image Upgrader — History */
+
+.ik-iu-history-table .ik-iu-expand-toggle {
+	cursor: pointer;
+	font-size: 14px;
+	padding: 2px 6px;
+	text-decoration: none;
+}
+
+.ik-iu-history-detail > td {
+	padding: 15px 20px;
+	background: #f9f9f9;
+}
+
+.ik-iu-status {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.ik-iu-status-running { background: #fff3cd; color: #856404; }
+.ik-iu-status-pending_review { background: #cce5ff; color: #004085; }
+.ik-iu-status-pending_resolution { background: #e8daef; color: #6c3483; }
+.ik-iu-status-applying { background: #fff3cd; color: #856404; }
+.ik-iu-status-completed { background: #d4edda; color: #155724; }
+.ik-iu-status-failed { background: #f8d7da; color: #721c24; }
+.ik-iu-status-discarded { background: #e2e3e5; color: #383d41; }
+.ik-iu-status-audit { background: #e8f0fe; color: #1a73e8; }
+
+/* Image Upgrader — Modal */
+
+.ik-modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.ik-modal-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.6);
+}
+
+.ik-modal-content {
+	position: relative;
+	background: #fff;
+	border-radius: 4px;
+	max-width: 900px;
+	width: 90%;
+	max-height: 80vh;
+	display: flex;
+	flex-direction: column;
+	box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+}
+
+.ik-modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 15px 20px;
+	border-bottom: 1px solid #ddd;
+}
+
+.ik-modal-header h3 {
+	margin: 0;
+}
+
+.ik-modal-close {
+	background: none;
+	border: none;
+	font-size: 24px;
+	cursor: pointer;
+	color: #666;
+	padding: 0 5px;
+}
+
+.ik-modal-close:hover {
+	color: #000;
+}
+
+.ik-modal-body {
+	padding: 20px;
+	overflow-y: auto;
+}
+
+.ik-modal-replacements {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.ik-modal-replacement-row {
+	padding: 15px;
+	border: 1px solid #e5e5e5;
+	border-radius: 3px;
+}
+
+.ik-modal-skipped {
+	color: #888;
+	font-size: 13px;
+}
+
+.ik-iu-text-detail {
+	margin-top: 10px;
+}
+
+.ik-iu-text-detail th {
+	width: 130px;
+	font-weight: 600;
+	font-size: 12px;
+}
+
+.ik-iu-text-detail td {
+	font-size: 12px;
+	word-break: break-all;
+}
+
+/* Image Upgrader — Skipped rows */
+
+.ik-iu-replacement-skipped {
+	opacity: 0.7;
+	background: #f8f8f8 !important;
+	border-left: 3px solid #ccc;
+}
+
+.ik-iu-skip-reason {
+	font-size: 12px;
+	font-weight: 600;
+	color: #888;
+	font-style: italic;
+	margin-bottom: 4px;
+}
+
+/* Image Upgrader — Filename match */
+
+.ik-iu-filename-match-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 11px;
+	font-weight: 600;
+	background: #e8f0fe;
+	color: #1a73e8;
+	margin-bottom: 8px;
+}
+
+/* Image Upgrader — Candidate selection */
+
+.ik-iu-candidates {
+	margin-top: 10px;
+	padding: 10px;
+	background: #f0f6fc;
+	border: 1px solid #c8d6e5;
+	border-radius: 3px;
+}
+
+.ik-iu-candidates-label {
+	margin: 0 0 8px;
+	font-size: 12px;
+}
+
+.ik-iu-candidate-option {
+	display: block;
+	margin: 4px 0;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.ik-iu-candidate-url {
+	word-break: break-all;
+}
+
+.ik-iu-candidate-dims {
+	color: #888;
+	margin-left: 4px;
+}
+
+/* Image Upgrader — Markup audit */
+
+.ik-iu-audit-issues {
+	margin: 6px 0;
+}
+
+.ik-iu-audit-issue {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 11px;
+	font-weight: 600;
+	margin-right: 4px;
+	margin-bottom: 4px;
+}
+
+.ik-iu-issue-missing_id,
+.ik-iu-issue-missing_sizeSlug {
+	background: #fff3cd;
+	color: #856404;
+}
+
+.ik-iu-issue-missing_wp_image_class,
+.ik-iu-issue-missing_size_class {
+	background: #f8d7da;
+	color: #721c24;
+}
+
+.ik-iu-markup-diff {
+	margin-top: 10px;
+}
+
+.ik-iu-markup-diff pre {
+	background: #f5f5f5;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 8px 12px;
+	font-size: 11px;
+	overflow-x: auto;
+	margin: 4px 0;
+}
+
+#ik-iu-preview-table-wrap .search-box {
+	margin-bottom: 0;
+}
+
+#ik-iu-preview-table-wrap .subsubsub {
+	margin-bottom: 5px;
+}
+
+.ik-iu-loading {
+	color: #888;
+	font-style: italic;
+}
+
+/* ── Low Resolution module ── */
+
+.ik-lr-date-input {
+	width: 140px;
+}
