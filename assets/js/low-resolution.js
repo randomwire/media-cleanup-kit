@@ -116,6 +116,7 @@
 
 		for (let i = start; i < end; i++) {
 			const item = allItems[i];
+			const sourceLabel = item.source === 'featured' ? 'Featured Image' : 'Content';
 			const dims = item.width && item.height
 				? item.width + ' × ' + item.height + ' (max ' + item.longest_side + 'px)'
 				: 'Unknown';
@@ -126,6 +127,7 @@
 
 			html += '<tr>' +
 				'<td class="ik-col-thumb">' + thumbHtml + '</td>' +
+				'<td>' + escHtml(sourceLabel) + '</td>' +
 				'<td><a href="' + escAttr(item.edit_link) + '" target="_blank">' +
 				escHtml(item.post_title) + '</a> <small>(ID: ' + item.post_id + ')</small></td>' +
 				'<td class="ik-path">' + escHtml(fileName) + '</td>' +
@@ -170,10 +172,11 @@
 		exportBtn.addEventListener('click', function () {
 			exportCSV(
 				'low-resolution-images.csv',
-				['Post ID', 'Post Title', 'Attachment ID', 'Image URL', 'File Path', 'Width', 'Height', 'Longest Side', 'Size Slug'],
+				['Post ID', 'Post Title', 'Source', 'Attachment ID', 'Image URL', 'File Path', 'Width', 'Height', 'Longest Side', 'Size Slug'],
 				allItems.map(function (item) {
 					return [
-						item.post_id, item.post_title, item.attachment_id,
+						item.post_id, item.post_title, (item.source || 'content'),
+						item.attachment_id,
 						item.src_url, item.file_path,
 						item.width, item.height, item.longest_side,
 						item.size_slug,

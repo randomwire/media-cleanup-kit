@@ -147,6 +147,7 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 				<thead>
 					<tr>
 						<th class="ik-col-thumb"><?php esc_html_e( 'Thumb', 'image-kit' ); ?></th>
+						<th><?php esc_html_e( 'Source', 'image-kit' ); ?></th>
 						<th><?php esc_html_e( 'Post', 'image-kit' ); ?></th>
 						<th><?php esc_html_e( 'Image', 'image-kit' ); ?></th>
 						<th><?php esc_html_e( 'Dimensions', 'image-kit' ); ?></th>

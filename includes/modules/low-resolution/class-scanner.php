@@ -209,6 +209,7 @@ class Image_Kit_Low_Resolution_Scanner {
 				'longest_side'   => $longest_side,
 				'thumbnail_url'  => $thumbnail_url,
 				'size_slug'      => isset( $attrs['sizeSlug'] ) ? $attrs['sizeSlug'] : '',
+				'source'         => 'content',
 			);
 		}
 
@@ -238,6 +239,7 @@ class Image_Kit_Low_Resolution_Scanner {
 					'longest_side'   => $longest_side,
 					'thumbnail_url'  => wp_get_attachment_image_url( $featured_attachment_id, 'thumbnail' ) ?: '',
 					'size_slug'      => 'featured-image',
+					'source'         => 'featured',
 				);
 			}
 		}
