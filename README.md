@@ -1,8 +1,8 @@
-# Image Kit
+# Media Cleanup Kit
 
-Image Kit is a WordPress admin plugin for auditing and cleaning up large media libraries.
+Media Cleanup Kit is a WordPress admin plugin for auditing and cleaning up large media libraries.
 
-It adds a single admin page at `Tools > Image Kit` with modular scanners and maintenance workflows for common image-library problems.
+It adds a single admin page at `Tools > Media Cleanup Kit` with modular scanners and maintenance workflows for common image-library problems.
 
 ## Features
 
@@ -11,6 +11,7 @@ It adds a single admin page at `Tools > Image Kit` with modular scanners and mai
 - **Relocator**: relocates media files from uploads subdirectories to uploads root, and imports orphan files into the Media Library.
 - **Unused Cleaner**: identifies image files not referenced in WordPress (content, media records, featured images, blocks, widgets, and meta) and supports safe deletion.
 - **Low Resolution**: reports post-content and featured images below a configurable resolution threshold.
+- **Attach Unparented Media**: matches unattached attachments to the posts that actually reference them.
 
 ## Requirements
 
@@ -20,8 +21,8 @@ It adds a single admin page at `Tools > Image Kit` with modular scanners and mai
 ## Installation
 
 1. Copy this plugin folder into your WordPress `wp-content/plugins/` directory.
-2. Activate **Image Kit** in the WordPress Plugins screen.
-3. Open `Tools > Image Kit`.
+2. Activate **Media Cleanup Kit** in the WordPress Plugins screen.
+3. Open `Tools > Media Cleanup Kit`.
 
 ## Usage Notes
 
@@ -31,7 +32,7 @@ It adds a single admin page at `Tools > Image Kit` with modular scanners and mai
 
 ## Project Structure
 
-- `image-kit.php` – plugin bootstrap, metadata, autoloader, lifecycle hooks.
+- `media-cleanup-kit.php` – plugin bootstrap, metadata, autoloader, lifecycle hooks.
 - `includes/class-plugin.php` – module registry and plugin orchestration.
 - `includes/admin/` – top-level admin page and shared UI wiring.
 - `includes/modules/` – module implementations (scanner + module UI/AJAX handlers).
@@ -41,7 +42,7 @@ It adds a single admin page at `Tools > Image Kit` with modular scanners and mai
 
 ## Versioning and Changelog
 
-- Current version is defined in `image-kit.php` via plugin header and `IMAGE_KIT_VERSION`.
+- Current version is defined in `media-cleanup-kit.php` via plugin header and `IMAGE_KIT_VERSION` (internal constant name preserved for in-place upgrade compatibility).
 - Document release changes in `CHANGELOG.md`.
 
 ## License
