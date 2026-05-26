@@ -17,11 +17,11 @@ class Image_Kit_Module_Reattach extends Image_Kit_Module {
 	}
 
 	public function get_name(): string {
-		return __( 'Attach Unparented Media', 'image-kit' );
+		return __( 'Attach Unparented Media', 'media-cleanup-kit' );
 	}
 
 	public function get_description(): string {
-		return __( 'Find media library items with no parent post and attach them to the first post/page that references them.', 'image-kit' );
+		return __( 'Find media library items with no parent post and attach them to the first post/page that references them.', 'media-cleanup-kit' );
 	}
 
 	public function register_ajax_handlers(): void {
@@ -59,13 +59,15 @@ class Image_Kit_Module_Reattach extends Image_Kit_Module {
 	private function verify_ajax(): void {
 		check_ajax_referer( Image_Kit_Admin_Page::NONCE_ACTION, 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'media-cleanup-kit' ) ) );
 		}
 	}
 
 	public function ajax_scan_batch(): void {
 		$this->verify_ajax();
-		set_time_limit( 120 );
+		if ( function_exists( 'set_time_limit' ) ) {
+			set_time_limit( 120 );
+		}
 
 		$offset     = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
 		$batch_size = isset( $_POST['batch_size'] ) ? absint( $_POST['batch_size'] ) : 50;
@@ -130,17 +132,17 @@ class Image_Kit_Module_Reattach extends Image_Kit_Module {
 				<?php
 				printf(
 					/* translators: %s: HTML <strong> count of unattached attachments. */
-					esc_html__( 'Find media library items with no parent post (currently %s) and attach them to the first post that references them.', 'image-kit' ),
+					esc_html__( 'Find media library items with no parent post (currently %s) and attach them to the first post that references them.', 'media-cleanup-kit' ),
 					'<strong>' . esc_html( number_format_i18n( $count ) ) . '</strong>'
 				);
 				?>
 			</p>
 			<?php if ( $count > 0 ) : ?>
 				<p>
-					<button id="ik-ra-scan" class="button button-primary"><?php esc_html_e( 'Scan Unattached Media', 'image-kit' ); ?></button>
+					<button id="ik-ra-scan" class="button button-primary"><?php esc_html_e( 'Scan Unattached Media', 'media-cleanup-kit' ); ?></button>
 				</p>
 			<?php else : ?>
-				<p><em><?php esc_html_e( 'All media is attached. Nothing to do here.', 'image-kit' ); ?></em></p>
+				<p><em><?php esc_html_e( 'All media is attached. Nothing to do here.', 'media-cleanup-kit' ); ?></em></p>
 			<?php endif; ?>
 		</div>
 

@@ -1,0 +1,125 @@
+=== Media Cleanup Kit ===
+Contributors: randomwire
+Donate link: https://ko-fi.com/randomwire
+Tags: media, images, cleanup, broken images, attachments
+Requires at least: 5.0
+Tested up to: 6.7
+Requires PHP: 7.4
+Stable tag: 1.0.36
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
+Eight tools for cleaning up a large WordPress media library: find broken images, restore full-size variants, repair image blocks, flatten uploads, import orphan files, delete unused files, replace low-resolution images, and attach unparented media.
+
+== Description ==
+
+**Media Cleanup Kit** is a single admin page that bundles eight focused tools for cleaning up the kind of mess that builds up in a media library over years of editing — broken references in post content, downsized images that should be full-size, files on disk that aren't in the library, attachments that aren't attached to any post, low-resolution scans you want to replace with higher-quality originals.
+
+Every tool follows the same flow: **scan → review → apply**, with a results table that supports sorting, filtering, full-text search, per-row inspection, per-row apply, bulk apply, and CSV export. Destructive actions create per-post HTML backups before mutating; pending-review workflows survive page reloads.
+
+= The eight tools =
+
+* **Find Broken Images** — Scan posts for `<img>` references whose underlying file is missing on disk. Per-row or bulk Remove strips the broken reference (keeping a timestamped HTML backup of the post). Handles Gutenberg blocks (wp:image, wp:gallery, wp:cover, wp:media-text) and raw `<img>` tags.
+* **Restore Full Size** — Find images displayed at a sized variant (300x200, scaled, etc.) when a larger original exists in the media library, and swap them for the full-size version. Interactive candidate picker for ambiguous matches. Pending-review workflow.
+* **Repair Image Blocks** — Audit Gutenberg `wp:image` blocks for missing metadata (block ID, sizeSlug, wp-image-* class) and produce a corrected block JSON. Per-post apply with exclusion checkboxes. Includes an Upload-replacement control for attachments that can no longer be auto-resolved.
+* **Flatten Uploads** — Move images out of year/month subdirectories into the uploads root, rewriting post content URLs so existing links keep working.
+* **Import Orphan Files** — Find image files in the uploads directory that aren't in the media library and import them as new attachments (with auto-generated thumbnails).
+* **Delete Unused Files** — Find image files (and grouped thumbnail variants) that aren't referenced anywhere in WordPress — post content, featured images, Gutenberg blocks, gallery shortcodes, custom meta — and safely delete them.
+* **Replace Low-Res Images** — Find images below a configurable resolution threshold. Generates an rsync hand-off so you can match them against a folder of higher-resolution originals on your workstation using the bundled `tools/photo-match.py` perceptual-hashing CLI, then re-upload the matches via the plugin.
+* **Attach Unparented Media** — Find attachments with no parent post and attach them to the first post that references them, via featured image, content URL, or classic gallery shortcode.
+
+= Safety =
+
+Media Cleanup Kit modifies post content, attachment metadata, and files on disk. Every destructive action has its own confirmation step. Many create per-post HTML backups (`wp-content/uploads/image-kit-backup/posts/{post_id}-{timestamp}.html`) before mutation. **Always back up your database and uploads directory before running anything.** Test on a staging site if possible.
+
+== Installation ==
+
+1. In your WordPress admin, go to **Plugins → Add New → Upload Plugin** and upload the Media Cleanup Kit zip.
+2. Activate the plugin.
+3. Open **Tools → Media Cleanup Kit**.
+4. Pick a tool from the left sidebar and follow the scan → review → apply flow.
+
+Or via WP-CLI:
+
+`wp plugin install media-cleanup-kit --activate`
+
+== Frequently Asked Questions ==
+
+= Is this safe? Does anything write to my database? =
+
+Yes, scans are read-only and the apply step always requires explicit user action. Destructive operations (post content rewrites, file deletion, attachment re-parenting) create per-post HTML backups where applicable and surface a confirmation step. **Back up your database and uploads directory before running any apply.**
+
+= What is the tools/photo-match.py file for? =
+
+It is an *optional* command-line helper for the Replace Low-Res Images workflow. The plugin generates an rsync hand-off (download low-res images → run photo-match.py against a folder of full-resolution originals on your workstation → rsync results back). The Python script is not executed by WordPress — it's there for you to run locally. Requires Python 3.8+ and the `imagehash` package. The other seven tools work without it.
+
+= Will this work on a large site? =
+
+Each tool is batched; scans process 25–500 items per AJAX call (depending on the workload) and can be cancelled mid-flight. The reattach scanner runs only two database queries per batch regardless of batch size. Smoke-tested on sites with 50k+ attachments.
+
+= Do you support custom post types? =
+
+Yes. Tools that scan post content (Find Broken Images, Restore Full Size, Repair Image Blocks, Replace Low-Res Images) expose a post-type filter on the configuration panel.
+
+= I'm seeing "attachment_not_found" rows. What do I do? =
+
+Click the **Upload replacement** button on the row to supply the correct file via the WP media uploader. The plugin persists a URL → attachment mapping so future scans resolve automatically.
+
+= How do I uninstall cleanly? =
+
+Deactivate then delete via WordPress. The plugin's uninstall handler drops both custom database tables and removes every option/transient/usermeta it created.
+
+== Screenshots ==
+
+1. The Media Cleanup Kit admin page with the left sidebar showing all eight tools.
+2. Find Broken Images results table — sortable, filterable, with per-row Remove and bulk apply.
+3. Restore Full Size review panel with before/after thumbnails and the candidate picker.
+4. Repair Image Blocks audit with the proposed block JSON and per-replacement exclusion checkboxes.
+5. Attach Unparented Media results with the proposed parent post, match type, and per-row Attach.
+6. The shared lightbox showing a before/after compare view.
+
+== Changelog ==
+
+= 1.0.36 =
+* Renamed plugin to Media Cleanup Kit (was previously "Image Kit" — renamed to avoid a name collision with the commercial ImageKit.io service).
+* Full WordPress.org compliance pass: added `readme.txt`, `LICENSE`, translation loader, build exclusions, prominent backup warning on the admin page.
+* Code-quality: `stripslashes` → `wp_unslash`, `@unlink` → `wp_delete_file`, `set_time_limit` calls now guarded.
+* Plugin row on the Plugins screen now shows Donate + GitHub links.
+
+= 1.0.35 =
+* **Attach Unparented Media:** stricter resolver — the file path or filename must actually appear in the candidate post to count as a content match. Weak signals (wp-image-N class, "id":N) are no longer matchable on their own (they outlive the underlying file and produce false positives). Classic [gallery ids="…"] remains a standalone signal via precise id-list parse.
+
+= 1.0.34 =
+* Bulk Apply button worked around browser-suppressed `window.confirm()` — multi-row applies now arm the button (turns amber) and require a second click. Same pattern as the Discard fix from 1.0.28. Affects every module with a bulk apply.
+
+= 1.0.33 =
+* Attach Unparented Media scan-batch perf — collapsed N×2 database queries per batch to a constant 2, ~25× faster on dense sites.
+
+= 1.0.32 =
+* New **Attach Unparented Media** module — finds `post_parent = 0` attachments and proposes a parent post via featured image, content URL, or classic gallery shortcode. Supersedes the standalone Post Attach plugin.
+
+= 1.0.31 =
+* Internal cleanup: removed dead methods, collapsed duplicated JS helpers to shared utils, dropped orphan CSS.
+
+= 1.0.30 =
+* Upload-replacement control on `attachment_not_found` rows in Repair Image Blocks and Restore Full Size. Persistent URL → attachment alias map.
+* Pruned never-used History columns and methods.
+
+= 1.0.27–1.0.29 =
+* attachment_not_found resolution: handle `-e<timestamp>` edited-image variants and `-scaled` big-image variants in the URL-to-attachment lookup chain.
+
+= 1.0.21–1.0.26 =
+* Scan-UX unification across all modules via shared scan-ui helper.
+* Built-in lightbox with compare mode.
+* Selection-aware CSV export.
+* Numerous bug-sweep fixes (focus retention, colspan correction, per-row apply failure propagation, etc.).
+
+= 1.0.1–1.0.20 =
+* Initial five-plugin consolidation, sidebar navigation, cancel on every scan.
+
+For the full version-by-version history see the `CHANGELOG.md` file in the GitHub repository.
+
+== Upgrade Notice ==
+
+= 1.0.36 =
+Plugin renamed from "Image Kit" to "Media Cleanup Kit". No data migration required — internal database tables and options keep their existing names. WP.org compliance pass.

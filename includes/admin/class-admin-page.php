@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 class Image_Kit_Admin_Page {
 
 	const NONCE_ACTION = 'image_kit_nonce';
-	const PAGE_SLUG    = 'image-kit';
+	const PAGE_SLUG    = 'media-cleanup-kit';
 
 	/**
 	 * @var Image_Kit_Module[]
@@ -33,8 +33,8 @@ class Image_Kit_Admin_Page {
 	 */
 	public function register_page(): void {
 		$hook = add_management_page(
-			__( 'Image Kit', 'image-kit' ),
-			__( 'Image Kit', 'image-kit' ),
+			__( 'Media Cleanup Kit', 'media-cleanup-kit' ),
+			__( 'Media Cleanup Kit', 'media-cleanup-kit' ),
 			'manage_options',
 			self::PAGE_SLUG,
 			array( $this, 'render_page' )
@@ -109,11 +109,18 @@ class Image_Kit_Admin_Page {
 		$module_list = array_values( $this->modules );
 		?>
 		<div class="wrap" id="image-kit-app">
-			<h1><?php esc_html_e( 'Image Kit', 'image-kit' ); ?></h1>
-			<p><?php esc_html_e( 'Tools for cleaning up and optimizing your WordPress media library.', 'image-kit' ); ?></p>
+			<h1><?php esc_html_e( 'Media Cleanup Kit', 'media-cleanup-kit' ); ?></h1>
+			<p><?php esc_html_e( 'Tools for cleaning up and optimizing your WordPress media library.', 'media-cleanup-kit' ); ?></p>
+
+			<div class="notice notice-warning ik-admin-warning">
+				<p>
+					<strong><?php esc_html_e( 'Back up your database and uploads directory before running any action.', 'media-cleanup-kit' ); ?></strong>
+					<?php esc_html_e( 'Media Cleanup Kit modifies post content, attachment metadata, and files on disk. While each destructive action has its own confirmation step and many create per-post HTML backups, you are solely responsible for any unintended consequences. Test on a staging site if possible.', 'media-cleanup-kit' ); ?>
+				</p>
+			</div>
 
 			<?php if ( empty( $module_list ) ) : ?>
-				<p><em><?php esc_html_e( 'No modules available.', 'image-kit' ); ?></em></p>
+				<p><em><?php esc_html_e( 'No modules available.', 'media-cleanup-kit' ); ?></em></p>
 				<?php return; ?>
 			<?php endif; ?>
 

@@ -25,11 +25,11 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 	}
 
 	public function get_name(): string {
-		return __( 'Restore Full Size', 'image-kit' );
+		return __( 'Restore Full Size', 'media-cleanup-kit' );
 	}
 
 	public function get_description(): string {
-		return __( 'Replace downsized image variants with full-size originals from the media library.', 'image-kit' );
+		return __( 'Replace downsized image variants with full-size originals from the media library.', 'media-cleanup-kit' );
 	}
 
 	public function activate(): void {
@@ -109,7 +109,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 	private function verify_ajax(): void {
 		check_ajax_referer( Image_Kit_Admin_Page::NONCE_ACTION, 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'image-kit' ), 403 );
+			wp_send_json_error( __( 'Permission denied.', 'media-cleanup-kit' ), 403 );
 		}
 	}
 
@@ -125,7 +125,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		$active = $this->run_log->get_active_run();
 		if ( $active ) {
 			wp_send_json_error( array(
-				'message' => __( 'A run is already in progress.', 'image-kit' ),
+				'message' => __( 'A run is already in progress.', 'media-cleanup-kit' ),
 			) );
 		}
 
@@ -134,7 +134,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		$valid_types = array_filter( $post_types, 'post_type_exists' );
 		if ( empty( $valid_types ) ) {
 			wp_send_json_error( array(
-				'message' => __( 'No valid post types selected.', 'image-kit' ),
+				'message' => __( 'No valid post types selected.', 'media-cleanup-kit' ),
 			) );
 		}
 
@@ -143,7 +143,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 
 		if ( 0 === $total_posts ) {
 			wp_send_json_error( array(
-				'message' => __( 'No published posts found for the selected post types.', 'image-kit' ),
+				'message' => __( 'No published posts found for the selected post types.', 'media-cleanup-kit' ),
 			) );
 		}
 
@@ -155,7 +155,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 
 		if ( ! $run_id ) {
 			wp_send_json_error( array(
-				'message' => __( 'Failed to create run record.', 'image-kit' ),
+				'message' => __( 'Failed to create run record.', 'media-cleanup-kit' ),
 			) );
 		}
 
@@ -175,7 +175,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		$post_types  = isset( $_POST['post_types'] ) ? array_map( 'sanitize_key', (array) $_POST['post_types'] ) : array();
 
 		if ( ! $run_id || empty( $post_types ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid request parameters.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid request parameters.', 'media-cleanup-kit' ) ) );
 		}
 
 		$batch_runner = new Image_Kit_Image_Upgrader_Batch_Runner( $this->run_log );
@@ -195,11 +195,11 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		$offset = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
 
 		if ( ! $run_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid run ID.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid run ID.', 'media-cleanup-kit' ) ) );
 		}
 
 		if ( 0 === $offset && isset( $_POST['exclusions'] ) ) {
-			$exclusions = json_decode( stripslashes( $_POST['exclusions'] ), true );
+			$exclusions = json_decode( wp_unslash( $_POST['exclusions'] ), true );
 			if ( is_array( $exclusions ) ) {
 				foreach ( $exclusions as $item_id => $excluded_indices ) {
 					$this->run_log->update_item_exclusions( absint( $item_id ), array_map( 'absint', $excluded_indices ) );
@@ -223,7 +223,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		$run_id = isset( $_POST['run_id'] ) ? absint( $_POST['run_id'] ) : 0;
 
 		if ( ! $run_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid run ID.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid run ID.', 'media-cleanup-kit' ) ) );
 		}
 
 		$items  = $this->run_log->get_items_for_run( $run_id );
@@ -247,7 +247,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		$run_id = isset( $_POST['run_id'] ) ? absint( $_POST['run_id'] ) : 0;
 
 		if ( ! $run_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid run ID.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid run ID.', 'media-cleanup-kit' ) ) );
 		}
 
 		$this->run_log->update_run( $run_id, array(
@@ -264,7 +264,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		$run_id = isset( $_POST['run_id'] ) ? absint( $_POST['run_id'] ) : 0;
 
 		if ( ! $run_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid run ID.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid run ID.', 'media-cleanup-kit' ) ) );
 		}
 
 		$items = $this->run_log->get_items_for_run( $run_id );
@@ -296,27 +296,27 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		$item_id = isset( $_POST['item_id'] ) ? absint( $_POST['item_id'] ) : 0;
 
 		if ( ! $run_id || ! $item_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid parameters.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid parameters.', 'media-cleanup-kit' ) ) );
 		}
 
 		$run = $this->run_log->get_run( $run_id );
 		if ( ! $run || ! in_array( $run->status, array( 'pending_review', 'applying' ), true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Run is not in a valid state for applying.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Run is not in a valid state for applying.', 'media-cleanup-kit' ) ) );
 		}
 
 		$item = $this->run_log->get_item( $item_id );
 		if ( ! $item || (int) $item->run_id !== $run_id ) {
-			wp_send_json_error( array( 'message' => __( 'Item not found.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Item not found.', 'media-cleanup-kit' ) ) );
 		}
 
 		$post = get_post( $item->post_id );
 		if ( ! $post ) {
-			wp_send_json_error( array( 'message' => __( 'Post not found.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Post not found.', 'media-cleanup-kit' ) ) );
 		}
 
 		if ( $run->post_snapshot_time && $post->post_modified_gmt > $run->post_snapshot_time ) {
 			wp_send_json_error( array(
-				'message' => __( 'Post has been modified since the scan. Skipped to avoid overwriting changes.', 'image-kit' ),
+				'message' => __( 'Post has been modified since the scan. Skipped to avoid overwriting changes.', 'media-cleanup-kit' ),
 			) );
 		}
 
@@ -360,20 +360,20 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		$url           = isset( $_POST['url'] ) ? esc_url_raw( wp_unslash( $_POST['url'] ) ) : '';
 
 		if ( ! $run_id || ! $item_id || ! $attachment_id || ! $url ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid parameters.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid parameters.', 'media-cleanup-kit' ) ) );
 		}
 
 		$attachment = get_post( $attachment_id );
 		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
-			wp_send_json_error( array( 'message' => __( 'Selected file is not a valid attachment.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Selected file is not a valid attachment.', 'media-cleanup-kit' ) ) );
 		}
 		if ( 0 !== strpos( (string) get_post_mime_type( $attachment_id ), 'image/' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Selected file is not an image.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Selected file is not an image.', 'media-cleanup-kit' ) ) );
 		}
 
 		$item = $this->run_log->get_item( $item_id );
 		if ( ! $item || (int) $item->run_id !== $run_id ) {
-			wp_send_json_error( array( 'message' => __( 'Item not found.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Item not found.', 'media-cleanup-kit' ) ) );
 		}
 
 		$scanner = new Image_Kit_Image_Upgrader_Scanner();
@@ -418,23 +418,23 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		$attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
 
 		if ( ! $item_id || ! $attachment_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid parameters.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid parameters.', 'media-cleanup-kit' ) ) );
 		}
 
 		$item = $this->run_log->get_item( $item_id );
 		if ( ! $item || empty( $item->replacements ) ) {
-			wp_send_json_error( array( 'message' => __( 'Item not found.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Item not found.', 'media-cleanup-kit' ) ) );
 		}
 
 		$replacements = json_decode( $item->replacements, true );
 		if ( ! is_array( $replacements ) || ! isset( $replacements[ $rep_index ] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Replacement not found.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Replacement not found.', 'media-cleanup-kit' ) ) );
 		}
 
 		$rep = &$replacements[ $rep_index ];
 
 		if ( empty( $rep['candidates'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'No candidates for this replacement.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'No candidates for this replacement.', 'media-cleanup-kit' ) ) );
 		}
 
 		$chosen = null;
@@ -446,7 +446,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		}
 
 		if ( ! $chosen ) {
-			wp_send_json_error( array( 'message' => __( 'Candidate not found.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Candidate not found.', 'media-cleanup-kit' ) ) );
 		}
 
 		$rep['attachment_id']     = $chosen['attachment_id'];
@@ -475,9 +475,9 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 
 		<!-- Configuration -->
 		<div class="ik-panel ik-scan-config" id="ik-iu-config">
-			<h3><?php esc_html_e( 'Scan Configuration', 'image-kit' ); ?></h3>
+			<h3><?php esc_html_e( 'Scan Configuration', 'media-cleanup-kit' ); ?></h3>
 			<fieldset>
-				<legend><?php esc_html_e( 'Post Types', 'image-kit' ); ?></legend>
+				<legend><?php esc_html_e( 'Post Types', 'media-cleanup-kit' ); ?></legend>
 				<?php foreach ( $post_types as $pt ) : ?>
 					<label>
 						<input type="checkbox"
@@ -489,7 +489,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 				<?php endforeach; ?>
 			</fieldset>
 			<p>
-				<button type="button" id="ik-iu-start-scan" class="button button-primary"><?php esc_html_e( 'Scan', 'image-kit' ); ?></button>
+				<button type="button" id="ik-iu-start-scan" class="button button-primary"><?php esc_html_e( 'Scan', 'media-cleanup-kit' ); ?></button>
 			</p>
 		</div>
 

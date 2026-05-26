@@ -75,7 +75,7 @@ class Image_Kit_Orphan_Importer_Scanner {
 		$state = get_transient( self::TRANSIENT_PREFIX . $token );
 		if ( ! is_array( $state ) || ! isset( $state['candidates'], $state['known_files'], $state['orphans'] ) ) {
 			return array(
-				'error' => __( 'Scan token expired. Please start a new scan.', 'image-kit' ),
+				'error' => __( 'Scan token expired. Please start a new scan.', 'media-cleanup-kit' ),
 			);
 		}
 
@@ -297,16 +297,16 @@ class Image_Kit_Orphan_Importer_Scanner {
 		$absolute_path = $basedir . '/' . $relative_path;
 
 		if ( ! Image_Kit_Core_File_Operations::validate_path_within( $absolute_path, $basedir ) ) {
-			return array( 'success' => false, 'message' => __( 'Invalid file path.', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'Invalid file path.', 'media-cleanup-kit' ) );
 		}
 
 		if ( ! file_exists( $absolute_path ) || ! is_readable( $absolute_path ) ) {
-			return array( 'success' => false, 'message' => __( 'File not found or not readable.', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'File not found or not readable.', 'media-cleanup-kit' ) );
 		}
 
 		$filetype = wp_check_filetype( wp_basename( $relative_path ) );
 		if ( empty( $filetype['type'] ) || 0 !== strpos( $filetype['type'], 'image/' ) ) {
-			return array( 'success' => false, 'message' => __( 'Not a recognised image type.', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'Not a recognised image type.', 'media-cleanup-kit' ) );
 		}
 
 		$filename      = wp_basename( $relative_path );
@@ -319,7 +319,7 @@ class Image_Kit_Orphan_Importer_Scanner {
 		), $absolute_path );
 
 		if ( is_wp_error( $attachment_id ) || ! $attachment_id ) {
-			return array( 'success' => false, 'message' => __( 'Failed to create attachment post.', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'Failed to create attachment post.', 'media-cleanup-kit' ) );
 		}
 
 		if ( function_exists( 'set_time_limit' ) ) {
@@ -331,7 +331,7 @@ class Image_Kit_Orphan_Importer_Scanner {
 
 		return array(
 			'success'       => true,
-			'message'       => __( 'Imported successfully.', 'image-kit' ),
+			'message'       => __( 'Imported successfully.', 'media-cleanup-kit' ),
 			'attachment_id' => $attachment_id,
 		);
 	}

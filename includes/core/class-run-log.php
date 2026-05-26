@@ -81,7 +81,10 @@ class Image_Kit_Core_Run_Log {
 		if ( $schema_version >= 2 ) {
 			return;
 		}
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery
+		// Table name is a trusted constant built from `$wpdb->prefix` in the
+		// constructor; no user input. SHOW COLUMNS / ALTER TABLE can't be
+		// prepared() (DDL).
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 		$cols = $wpdb->get_col( "SHOW COLUMNS FROM {$this->runs_table}", 0 );
 		if ( in_array( 'posts_updated', $cols, true ) ) {
 			$wpdb->query( "ALTER TABLE {$this->runs_table} DROP COLUMN posts_updated" );

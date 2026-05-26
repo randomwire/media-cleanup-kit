@@ -18,11 +18,11 @@ class Image_Kit_Module_Relocator extends Image_Kit_Module {
 	}
 
 	public function get_name(): string {
-		return __( 'Flatten Uploads', 'image-kit' );
+		return __( 'Flatten Uploads', 'media-cleanup-kit' );
 	}
 
 	public function get_description(): string {
-		return __( 'Move images from upload subdirectories to the uploads root.', 'image-kit' );
+		return __( 'Move images from upload subdirectories to the uploads root.', 'media-cleanup-kit' );
 	}
 
 	public function register_ajax_handlers(): void {
@@ -59,7 +59,7 @@ class Image_Kit_Module_Relocator extends Image_Kit_Module {
 	private function verify_ajax(): void {
 		check_ajax_referer( Image_Kit_Admin_Page::NONCE_ACTION, 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'image-kit' ), 403 );
+			wp_send_json_error( __( 'Permission denied.', 'media-cleanup-kit' ), 403 );
 		}
 	}
 
@@ -94,7 +94,7 @@ class Image_Kit_Module_Relocator extends Image_Kit_Module {
 			: array();
 
 		if ( empty( $ids ) ) {
-			wp_send_json_error( __( 'No attachments specified.', 'image-kit' ) );
+			wp_send_json_error( __( 'No attachments specified.', 'media-cleanup-kit' ) );
 		}
 
 		$scanner = new Image_Kit_Relocator_Scanner();
@@ -122,10 +122,10 @@ class Image_Kit_Module_Relocator extends Image_Kit_Module {
 	public function render_tab_content(): void {
 		?>
 		<div class="ik-panel ik-scan-config" id="ik-rel-config">
-			<h3><?php esc_html_e( 'Scan for Relocatable Images', 'image-kit' ); ?></h3>
-			<p><?php esc_html_e( 'Scans all subdirectories of the uploads folder for media library images that can be moved to the uploads root.', 'image-kit' ); ?></p>
+			<h3><?php esc_html_e( 'Scan for Relocatable Images', 'media-cleanup-kit' ); ?></h3>
+			<p><?php esc_html_e( 'Scans all subdirectories of the uploads folder for media library images that can be moved to the uploads root.', 'media-cleanup-kit' ); ?></p>
 			<p>
-				<button type="button" id="ik-rel-scan" class="button button-primary"><?php esc_html_e( 'Scan for Images', 'image-kit' ); ?></button>
+				<button type="button" id="ik-rel-scan" class="button button-primary"><?php esc_html_e( 'Scan for Images', 'media-cleanup-kit' ); ?></button>
 			</p>
 		</div>
 

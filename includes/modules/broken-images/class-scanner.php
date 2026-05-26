@@ -178,18 +178,18 @@ class Image_Kit_Broken_Images_Scanner {
 	public function remove_broken_from_post( int $post_id, string $image_url, string $block_type ): array {
 		$post = get_post( $post_id );
 		if ( ! $post ) {
-			return array( 'success' => false, 'message' => __( 'Post not found.', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'Post not found.', 'media-cleanup-kit' ) );
 		}
 
 		// ── Featured image ─────────────────────────────────────────────
 		if ( 'Featured Image' === $block_type ) {
 			$thumb_id = (int) get_post_thumbnail_id( $post_id );
 			if ( ! $thumb_id ) {
-				return array( 'success' => false, 'message' => __( 'No featured image set on this post.', 'image-kit' ) );
+				return array( 'success' => false, 'message' => __( 'No featured image set on this post.', 'media-cleanup-kit' ) );
 			}
 			$featured_url = wp_get_attachment_url( $thumb_id );
 			if ( ! $featured_url || ! $this->urls_match( $featured_url, $image_url ) ) {
-				return array( 'success' => false, 'message' => __( 'Featured image URL no longer matches the scanned URL.', 'image-kit' ) );
+				return array( 'success' => false, 'message' => __( 'Featured image URL no longer matches the scanned URL.', 'media-cleanup-kit' ) );
 			}
 
 			$backup = $this->backup_post( $post_id, $post->post_content );
@@ -197,7 +197,7 @@ class Image_Kit_Broken_Images_Scanner {
 
 			return array(
 				'success'     => true,
-				'message'     => __( 'Featured image removed.', 'image-kit' ),
+				'message'     => __( 'Featured image removed.', 'media-cleanup-kit' ),
 				'backup_file' => $backup,
 			);
 		}
@@ -207,7 +207,7 @@ class Image_Kit_Broken_Images_Scanner {
 		$new_content = $this->strip_image_from_content( $content, $image_url, $block_type );
 
 		if ( $new_content === $content ) {
-			return array( 'success' => false, 'message' => __( 'No matching markup found in post content (may have been edited since the scan).', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'No matching markup found in post content (may have been edited since the scan).', 'media-cleanup-kit' ) );
 		}
 
 		$backup = $this->backup_post( $post_id, $content );

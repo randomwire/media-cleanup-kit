@@ -1,0 +1,35 @@
+# Files and directories to exclude from the distribution zip uploaded to
+# the WordPress.org plugin directory. Honoured by `wp dist-archive` and the
+# universal build.sh in this repo.
+
+# Version control / IDE
+.git/
+.github/
+.gitignore
+.distignore
+.editorconfig
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Dev tooling
+node_modules/
+build/
+dist/
+*.log
+
+# Dev-only docs (canonical changelog is readme.txt's Changelog section)
+CHANGELOG.md
+README.md
+CLAUDE.md
+.claude/
+
+# Build/release artifacts
+build.sh
+*.zip
+
+# Plan/spec artifacts (sometimes generated locally)
+.plans/

@@ -152,7 +152,7 @@ class Image_Kit_Relocator_Scanner {
 
 		$old_file = get_attached_file( $attachment_id );
 		if ( ! $old_file || ! file_exists( $old_file ) ) {
-			return array( 'success' => false, 'message' => __( 'Attached file not found on disk.', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'Attached file not found on disk.', 'media-cleanup-kit' ) );
 		}
 
 		$old_dir      = dirname( $old_file );
@@ -161,7 +161,7 @@ class Image_Kit_Relocator_Scanner {
 		$old_subdir   = dirname( $old_relative );
 
 		if ( '.' === $old_subdir || '' === $old_subdir ) {
-			return array( 'success' => false, 'message' => __( 'File is already in the uploads root.', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'File is already in the uploads root.', 'media-cleanup-kit' ) );
 		}
 
 		$meta = wp_get_attachment_metadata( $attachment_id );
@@ -228,7 +228,7 @@ class Image_Kit_Relocator_Scanner {
 
 		// Pre-flight checks.
 		if ( ! is_writable( $basedir ) ) {
-			return array( 'success' => false, 'message' => __( 'Target directory is not writable.', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'Target directory is not writable.', 'media-cleanup-kit' ) );
 		}
 
 		// Move files with rollback.
@@ -243,18 +243,24 @@ class Image_Kit_Relocator_Scanner {
 					array_values( $moved ),
 					array_keys( $moved )
 				) );
-				return array( 'success' => false, 'message' => sprintf( __( 'Target file already exists: %s', 'image-kit' ), $new_name ) );
+				return array( 'success' => false, 'message' => sprintf( __( 'Target file already exists: %s', 'media-cleanup-kit' ), $new_name ) );
 			}
 
+			// Try rename() first (atomic, same-filesystem). Fall back to copy+delete
+			// across filesystems. `@` suppression on rename() is deliberate — we
+			// expect failures across filesystems and handle them in the fallback.
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 			if ( @rename( $old_path, $new_path ) ) {
 				$moved[ $new_path ] = $old_path;
-			} elseif ( @copy( $old_path, $new_path ) && @unlink( $old_path ) ) {
+			} elseif ( copy( $old_path, $new_path ) ) {
+				wp_delete_file( $old_path );
 				$moved[ $new_path ] = $old_path;
 			} else {
 				foreach ( $moved as $np => $op ) {
+					// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 					@rename( $np, $op );
 				}
-				return array( 'success' => false, 'message' => sprintf( __( 'Failed to move file: %s', 'image-kit' ), $old_name ) );
+				return array( 'success' => false, 'message' => sprintf( __( 'Failed to move file: %s', 'media-cleanup-kit' ), $old_name ) );
 			}
 		}
 
@@ -302,7 +308,7 @@ class Image_Kit_Relocator_Scanner {
 
 		return array(
 			'success' => true,
-			'message' => __( 'Relocated successfully.', 'image-kit' ),
+			'message' => __( 'Relocated successfully.', 'media-cleanup-kit' ),
 			'details' => array(
 				'files_moved'   => count( $moved ),
 				'posts_updated' => $posts_updated,

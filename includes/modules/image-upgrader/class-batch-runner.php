@@ -61,7 +61,7 @@ class Image_Kit_Image_Upgrader_Batch_Runner {
 		if ( ! $run || 'running' !== $run->status ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Run is not in a valid state for scanning.', 'image-kit' ),
+				'message' => __( 'Run is not in a valid state for scanning.', 'media-cleanup-kit' ),
 			);
 		}
 
@@ -125,7 +125,7 @@ class Image_Kit_Image_Upgrader_Batch_Runner {
 
 			$log_lines[] = array(
 				'post_id'  => $post_id,
-				'title'    => $post ? $post->post_title : sprintf( __( 'Post #%d', 'image-kit' ), $post_id ),
+				'title'    => $post ? $post->post_title : sprintf( __( 'Post #%d', 'media-cleanup-kit' ), $post_id ),
 				'replaced' => $scan_result['images_replaced'],
 				'skipped'  => $scan_result['images_skipped'],
 			);
@@ -177,7 +177,7 @@ class Image_Kit_Image_Upgrader_Batch_Runner {
 		if ( ! $run || ! in_array( $run->status, array( 'pending_review', 'applying' ), true ) ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Run is not in a valid state for applying.', 'image-kit' ),
+				'message' => __( 'Run is not in a valid state for applying.', 'media-cleanup-kit' ),
 			);
 		}
 
@@ -335,7 +335,7 @@ class Image_Kit_Image_Upgrader_Batch_Runner {
 		if ( ! $run || 'running' !== $run->status ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Run is not in a valid state for auditing.', 'image-kit' ),
+				'message' => __( 'Run is not in a valid state for auditing.', 'media-cleanup-kit' ),
 			);
 		}
 
@@ -399,7 +399,7 @@ class Image_Kit_Image_Upgrader_Batch_Runner {
 
 			$log_lines[] = array(
 				'post_id'  => $post_id,
-				'title'    => $post ? $post->post_title : sprintf( __( 'Post #%d', 'image-kit' ), $post_id ),
+				'title'    => $post ? $post->post_title : sprintf( __( 'Post #%d', 'media-cleanup-kit' ), $post_id ),
 				'replaced' => $audit_result['images_replaced'],
 				'skipped'  => $audit_result['images_skipped'],
 			);
@@ -451,7 +451,7 @@ class Image_Kit_Image_Upgrader_Batch_Runner {
 		if ( ! $run || ! in_array( $run->status, array( 'pending_review', 'applying' ), true ) ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Run is not in a valid state for applying.', 'image-kit' ),
+				'message' => __( 'Run is not in a valid state for applying.', 'media-cleanup-kit' ),
 			);
 		}
 

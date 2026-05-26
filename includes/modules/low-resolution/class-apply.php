@@ -35,29 +35,29 @@ class Image_Kit_Low_Resolution_Apply {
 		if ( ! is_dir( $matched_dir ) ) {
 			$errors[] = sprintf(
 				/* translators: %s: relative path */
-				__( 'Expected %s — upload the matched-photos folder from your Mac first (rsync command above).', 'image-kit' ),
+				__( 'Expected %s — upload the matched-photos folder from your Mac first (rsync command above).', 'media-cleanup-kit' ),
 				'wp-content/uploads/' . self::MATCHED_DIR_NAME . '/'
 			);
 		} elseif ( ! is_readable( $matched_dir ) ) {
 			$errors[] = sprintf(
 				/* translators: %s: chmod command */
-				__( 'wp-content/uploads/matched-photos/ exists but cannot be read by PHP. On the server, run: %s', 'image-kit' ),
+				__( 'wp-content/uploads/matched-photos/ exists but cannot be read by PHP. On the server, run: %s', 'media-cleanup-kit' ),
 				'chmod -R 755 wp-content/uploads/matched-photos/'
 			);
 		} else {
 			if ( ! file_exists( $csv_path ) ) {
-				$errors[] = __( 'matched-photos/ is present but photo-match-results.csv is missing — re-run photo-match.py to produce it.', 'image-kit' );
+				$errors[] = __( 'matched-photos/ is present but photo-match-results.csv is missing — re-run photo-match.py to produce it.', 'media-cleanup-kit' );
 			} elseif ( ! is_readable( $csv_path ) ) {
-				$errors[] = __( 'photo-match-results.csv exists but cannot be read — check file permissions (chmod 644).', 'image-kit' );
+				$errors[] = __( 'photo-match-results.csv exists but cannot be read — check file permissions (chmod 644).', 'media-cleanup-kit' );
 			}
 		}
 
 		if ( ! is_dir( $backup_dir ) ) {
 			if ( ! is_writable( $basedir ) ) {
-				$errors[] = __( 'Cannot create wp-content/uploads/image-kit-backup/ — the uploads directory is not writable by the web server. Apply would fail to back up originals.', 'image-kit' );
+				$errors[] = __( 'Cannot create wp-content/uploads/image-kit-backup/ — the uploads directory is not writable by the web server. Apply would fail to back up originals.', 'media-cleanup-kit' );
 			}
 		} elseif ( ! is_writable( $backup_dir ) ) {
-			$errors[] = __( 'wp-content/uploads/image-kit-backup/ exists but is not writable. Apply would fail to back up originals.', 'image-kit' );
+			$errors[] = __( 'wp-content/uploads/image-kit-backup/ exists but is not writable. Apply would fail to back up originals.', 'media-cleanup-kit' );
 		}
 
 		return array(
@@ -84,7 +84,7 @@ class Image_Kit_Low_Resolution_Apply {
 		if ( false === $rows ) {
 			return array(
 				'ok'     => false,
-				'errors' => array( __( 'photo-match-results.csv could not be parsed.', 'image-kit' ) ),
+				'errors' => array( __( 'photo-match-results.csv could not be parsed.', 'media-cleanup-kit' ) ),
 				'items'  => array(),
 			);
 		}
@@ -140,7 +140,7 @@ class Image_Kit_Low_Resolution_Apply {
 
 		$rows = $this->read_csv( $pre['csv_path'] );
 		if ( false === $rows ) {
-			return array( 'success' => false, 'message' => __( 'photo-match-results.csv could not be parsed.', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'photo-match-results.csv could not be parsed.', 'media-cleanup-kit' ) );
 		}
 
 		$row = null;
@@ -151,7 +151,7 @@ class Image_Kit_Low_Resolution_Apply {
 			}
 		}
 		if ( ! $row ) {
-			return array( 'success' => false, 'message' => sprintf( __( 'No CSV row found for attachment #%d.', 'image-kit' ), $attachment_id ) );
+			return array( 'success' => false, 'message' => sprintf( __( 'No CSV row found for attachment #%d.', 'media-cleanup-kit' ), $attachment_id ) );
 		}
 
 		$replacement_path = $pre['matched_dir'] . '/' . $row['exported_filename'];
@@ -159,39 +159,39 @@ class Image_Kit_Low_Resolution_Apply {
 		// Per-row checks (plan §4).
 		$attachment = get_post( $attachment_id );
 		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
-			return array( 'success' => false, 'message' => sprintf( __( 'Attachment #%d no longer exists or is not an image.', 'image-kit' ), $attachment_id ) );
+			return array( 'success' => false, 'message' => sprintf( __( 'Attachment #%d no longer exists or is not an image.', 'media-cleanup-kit' ), $attachment_id ) );
 		}
 		if ( strpos( (string) $attachment->post_mime_type, 'image/' ) !== 0 ) {
-			return array( 'success' => false, 'message' => sprintf( __( 'Attachment #%d is not an image (mime: %s).', 'image-kit' ), $attachment_id, $attachment->post_mime_type ) );
+			return array( 'success' => false, 'message' => sprintf( __( 'Attachment #%d is not an image (mime: %s).', 'media-cleanup-kit' ), $attachment_id, $attachment->post_mime_type ) );
 		}
 
 		$original_path = get_attached_file( $attachment_id );
 		if ( ! $original_path || ! file_exists( $original_path ) ) {
-			return array( 'success' => false, 'message' => sprintf( __( 'Original file not found on disk for attachment #%d — cannot back up safely, skipping.', 'image-kit' ), $attachment_id ) );
+			return array( 'success' => false, 'message' => sprintf( __( 'Original file not found on disk for attachment #%d — cannot back up safely, skipping.', 'media-cleanup-kit' ), $attachment_id ) );
 		}
 
 		$original_dir = dirname( $original_path );
 		if ( ! is_writable( $original_dir ) ) {
-			return array( 'success' => false, 'message' => sprintf( __( 'Cannot write to %s — replacement aborted to avoid corrupting metadata.', 'image-kit' ), $original_dir ) );
+			return array( 'success' => false, 'message' => sprintf( __( 'Cannot write to %s — replacement aborted to avoid corrupting metadata.', 'media-cleanup-kit' ), $original_dir ) );
 		}
 
 		if ( ! file_exists( $replacement_path ) || ! is_readable( $replacement_path ) ) {
-			return array( 'success' => false, 'message' => __( 'Replacement file missing or unreadable — did rsync finish?', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'Replacement file missing or unreadable — did rsync finish?', 'media-cleanup-kit' ) );
 		}
 
 		// Backup guard: refuse if a backup already exists.
 		$attach_backup_dir  = $pre['backup_dir'] . '/' . $attachment_id;
 		$backup_target_file = $attach_backup_dir . '/' . wp_basename( $original_path );
 		if ( file_exists( $backup_target_file ) ) {
-			return array( 'success' => false, 'message' => sprintf( __( 'A backup already exists for attachment #%d — this row was likely already applied. Skipping to avoid overwriting the original backup.', 'image-kit' ), $attachment_id ) );
+			return array( 'success' => false, 'message' => sprintf( __( 'A backup already exists for attachment #%d — this row was likely already applied. Skipping to avoid overwriting the original backup.', 'media-cleanup-kit' ), $attachment_id ) );
 		}
 
 		if ( ! wp_mkdir_p( $attach_backup_dir ) ) {
-			return array( 'success' => false, 'message' => sprintf( __( 'Could not create backup directory at %s.', 'image-kit' ), $attach_backup_dir ) );
+			return array( 'success' => false, 'message' => sprintf( __( 'Could not create backup directory at %s.', 'media-cleanup-kit' ), $attach_backup_dir ) );
 		}
 
 		if ( ! copy( $original_path, $backup_target_file ) ) {
-			return array( 'success' => false, 'message' => sprintf( __( 'Failed to back up original file to %s.', 'image-kit' ), $backup_target_file ) );
+			return array( 'success' => false, 'message' => sprintf( __( 'Failed to back up original file to %s.', 'media-cleanup-kit' ), $backup_target_file ) );
 		}
 
 		// File swap + thumbnail regeneration.
@@ -200,7 +200,7 @@ class Image_Kit_Low_Resolution_Apply {
 		if ( is_wp_error( $result ) ) {
 			return array(
 				'success' => false,
-				'message' => sprintf( __( 'Replacement failed: %s', 'image-kit' ), $result->get_error_message() ),
+				'message' => sprintf( __( 'Replacement failed: %s', 'media-cleanup-kit' ), $result->get_error_message() ),
 			);
 		}
 
@@ -209,7 +209,7 @@ class Image_Kit_Low_Resolution_Apply {
 
 		return array(
 			'success'       => true,
-			'message'       => __( 'Replaced.', 'image-kit' ),
+			'message'       => __( 'Replaced.', 'media-cleanup-kit' ),
 			'posts_updated' => $posts_updated,
 		);
 	}
@@ -329,7 +329,7 @@ class Image_Kit_Low_Resolution_Apply {
 		$matched_dir = $basedir . '/' . self::MATCHED_DIR_NAME;
 
 		if ( ! is_dir( $matched_dir ) ) {
-			return array( 'success' => true, 'message' => __( 'Already removed.', 'image-kit' ), 'undeletable' => array() );
+			return array( 'success' => true, 'message' => __( 'Already removed.', 'media-cleanup-kit' ), 'undeletable' => array() );
 		}
 
 		// Path containment check.
@@ -338,7 +338,7 @@ class Image_Kit_Low_Resolution_Apply {
 		if ( ! $real_target || ! $real_root || strpos( $real_target, $real_root . DIRECTORY_SEPARATOR ) !== 0 ) {
 			return array(
 				'success'     => false,
-				'message'     => __( 'Refusing to delete — target is outside wp-content/uploads/.', 'image-kit' ),
+				'message'     => __( 'Refusing to delete — target is outside wp-content/uploads/.', 'media-cleanup-kit' ),
 				'undeletable' => array(),
 			);
 		}
@@ -349,14 +349,14 @@ class Image_Kit_Low_Resolution_Apply {
 		if ( ! empty( $undeletable ) ) {
 			return array(
 				'success'     => false,
-				'message'     => sprintf( __( 'Some files could not be deleted. Check permissions and retry.', 'image-kit' ) ),
+				'message'     => sprintf( __( 'Some files could not be deleted. Check permissions and retry.', 'media-cleanup-kit' ) ),
 				'undeletable' => $undeletable,
 			);
 		}
 
 		return array(
 			'success'     => true,
-			'message'     => __( 'Removed matched-photos directory.', 'image-kit' ),
+			'message'     => __( 'Removed matched-photos directory.', 'media-cleanup-kit' ),
 			'undeletable' => array(),
 		);
 	}
@@ -386,7 +386,8 @@ class Image_Kit_Low_Resolution_Apply {
 			return;
 		}
 
-		if ( ! @unlink( $path ) ) {
+		wp_delete_file( $path );
+		if ( file_exists( $path ) ) {
 			$undeletable[] = $path;
 		}
 	}

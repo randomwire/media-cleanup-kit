@@ -132,20 +132,20 @@ class Image_Kit_Reattach_Scanner {
 	 */
 	public function attach( int $attachment_id, int $parent_id ): array {
 		if ( ! $attachment_id || ! $parent_id ) {
-			return array( 'success' => false, 'message' => __( 'Invalid parameters.', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'Invalid parameters.', 'media-cleanup-kit' ) );
 		}
 
 		$attachment = get_post( $attachment_id );
 		if ( ! $attachment || 'attachment' !== $attachment->post_type ) {
-			return array( 'success' => false, 'message' => __( 'Attachment not found.', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'Attachment not found.', 'media-cleanup-kit' ) );
 		}
 		if ( 0 !== (int) $attachment->post_parent ) {
-			return array( 'success' => false, 'message' => __( 'Already attached.', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'Already attached.', 'media-cleanup-kit' ) );
 		}
 
 		$parent = get_post( $parent_id );
 		if ( ! $parent ) {
-			return array( 'success' => false, 'message' => __( 'Proposed parent post not found.', 'image-kit' ) );
+			return array( 'success' => false, 'message' => __( 'Proposed parent post not found.', 'media-cleanup-kit' ) );
 		}
 
 		$result = wp_update_post( array(
@@ -341,7 +341,7 @@ class Image_Kit_Reattach_Scanner {
 
 		// 1. Featured image — deliberate, wins over content references.
 		if ( $featured_row ) {
-			return array_merge( $base, $this->format_host( $featured_row, __( 'Featured image', 'image-kit' ) ), array(
+			return array_merge( $base, $this->format_host( $featured_row, __( 'Featured image', 'media-cleanup-kit' ) ), array(
 				'match_type' => 'featured_image',
 			) );
 		}
@@ -438,7 +438,7 @@ class Image_Kit_Reattach_Scanner {
 	}
 
 	private function format_host( $row, string $evidence ): array {
-		$label = $row->post_title ? $row->post_title : sprintf( __( '(no title) #%d', 'image-kit' ), (int) $row->ID );
+		$label = $row->post_title ? $row->post_title : sprintf( __( '(no title) #%d', 'media-cleanup-kit' ), (int) $row->ID );
 		if ( isset( $row->post_status ) && 'publish' !== $row->post_status ) {
 			$label .= ' [' . $row->post_status . ']';
 		}

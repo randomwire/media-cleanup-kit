@@ -721,6 +721,22 @@ button:disabled {
 	margin-right: 8px;
 }
 
+.ik-admin-warning {
+	border-left-width: 6px !important;
+	padding: 12px 14px !important;
+	margin: 16px 0 20px !important;
+}
+.ik-admin-warning p {
+	margin: 0;
+	font-size: 13.5px;
+	line-height: 1.55;
+}
+.ik-admin-warning strong {
+	font-size: 14.5px;
+	display: block;
+	margin-bottom: 4px;
+}
+
 .ik-scan-discard-armed {
 	background: #f8d7da !important;
 	border-color: #d63638 !important;

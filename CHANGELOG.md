@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.36 - 2026-05-26
+
+### Changed
+- **Renamed plugin to "Media Cleanup Kit"** — the previous name "Image Kit" collided with the commercial **ImageKit.io** CDN's trademark and would not survive WordPress.org plugin-directory review. Public-facing surfaces (Plugin Name header, admin menu title and page heading, textdomain, slug `media-cleanup-kit`) all use the new name. **Internal namespace stays as `Image_Kit_*`** — no class, constant, option, transient, or table rename — so existing installs upgrade in place with zero data migration.
+
+### Added
+- `readme.txt` in WP.org format (Description, Installation, FAQ, Screenshots, Changelog, Upgrade Notice; `Donate link:` set to Ko-fi).
+- `LICENSE` file (GPL-2.0 full text).
+- `.distignore` excluding dev artifacts from the WP.org distribution zip (`build.sh`, `CLAUDE.md`, `CHANGELOG.md`, `.git/`, etc.).
+- `load_plugin_textdomain()` bootstrap call + `/languages/` directory ready for translators.
+- Donate + GitHub links on the Plugins screen row meta (via `plugin_row_meta` filter — mirrors the Mapthread pattern).
+- Prominent backup-warning notice at the top of the admin page reminding users to back up their database and uploads directory before running any action.
+
+### Fixed
+- `stripslashes( $_POST[...] )` → `wp_unslash()` in markup-audit and image-upgrader exclusion-list parsers (WP convention).
+- `@unlink()` → `wp_delete_file()` in low-resolution apply and relocator's cross-filesystem move fallback.
+- `set_time_limit()` calls in reattach, unused-cleaner, and orphan-importer now guarded with `function_exists()` so hosts that disable the function degrade gracefully instead of erroring.
+- `phpcs:ignore` annotations on the run-log's `SHOW COLUMNS` / `ALTER TABLE` schema migration now include justifications, satisfying the WP.org automated sniff.
+
+### Build / packaging
+- `build.sh` finds the plugin main file by scanning for the `Plugin Name:` header rather than guessing from the directory name. The output zip slug now derives from the main filename, so directory and filename can be renamed independently.
+
 ## 1.0.35 - 2026-05-26
 
 ### Fixed

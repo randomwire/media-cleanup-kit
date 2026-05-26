@@ -48,6 +48,28 @@ class Image_Kit_Plugin {
 		if ( is_admin() ) {
 			new Image_Kit_Admin_Page( $this->modules );
 		}
+
+		// Donate / GitHub links on the Plugins screen.
+		add_filter( 'plugin_row_meta', array( $this, 'add_plugin_row_meta' ), 10, 2 );
+	}
+
+	/**
+	 * Append Donate + GitHub links to this plugin's row on the Plugins page.
+	 *
+	 * @param string[] $links Existing row meta.
+	 * @param string   $file  Plugin file being filtered.
+	 * @return string[]
+	 */
+	public function add_plugin_row_meta( $links, $file ) {
+		if ( plugin_basename( IMAGE_KIT_PLUGIN_FILE ) === $file ) {
+			$links[] = '<a href="https://ko-fi.com/randomwire" target="_blank" rel="noopener noreferrer">'
+				. esc_html__( 'Donate', 'media-cleanup-kit' )
+				. '</a>';
+			$links[] = '<a href="https://github.com/randomwire/media-cleanup-kit" target="_blank" rel="noopener noreferrer">'
+				. esc_html__( 'GitHub', 'media-cleanup-kit' )
+				. '</a>';
+		}
+		return $links;
 	}
 
 	/**

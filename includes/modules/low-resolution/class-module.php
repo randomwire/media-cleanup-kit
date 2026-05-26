@@ -22,11 +22,11 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 	}
 
 	public function get_name(): string {
-		return __( 'Replace Low-Res Images', 'image-kit' );
+		return __( 'Replace Low-Res Images', 'media-cleanup-kit' );
 	}
 
 	public function get_description(): string {
-		return __( 'Find post-content and featured images below a configurable resolution threshold (scan and report only).', 'image-kit' );
+		return __( 'Find post-content and featured images below a configurable resolution threshold (scan and report only).', 'media-cleanup-kit' );
 	}
 
 	public function register_ajax_handlers(): void {
@@ -74,7 +74,7 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 		check_ajax_referer( Image_Kit_Admin_Page::NONCE_ACTION, 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'image-kit' ), 403 );
+			wp_send_json_error( __( 'Permission denied.', 'media-cleanup-kit' ), 403 );
 		}
 
 		$offset      = absint( $_POST['offset'] ?? 0 );
@@ -119,7 +119,7 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 	private function verify_ajax(): void {
 		check_ajax_referer( Image_Kit_Admin_Page::NONCE_ACTION, 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'image-kit' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'media-cleanup-kit' ) ), 403 );
 		}
 	}
 
@@ -129,7 +129,7 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 		$result = $apply->scan_matched();
 		if ( ! $result['ok'] ) {
 			wp_send_json_error( array(
-				'message' => __( 'Could not scan matched-photos directory.', 'image-kit' ),
+				'message' => __( 'Could not scan matched-photos directory.', 'media-cleanup-kit' ),
 				'details' => $result['errors'],
 			) );
 		}
@@ -140,7 +140,7 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 		$this->verify_ajax();
 		$attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
 		if ( ! $attachment_id ) {
-			wp_send_json_error( array( 'message' => __( 'Missing attachment_id.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Missing attachment_id.', 'media-cleanup-kit' ) ) );
 		}
 		$apply  = new Image_Kit_Low_Resolution_Apply();
 		$result = $apply->apply_one( $attachment_id );
@@ -165,7 +165,7 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 		?>
 		<div class="ik-panel ik-scan-config" id="ik-lr-config">
 			<fieldset>
-				<legend><strong><?php esc_html_e( 'Post types to scan:', 'image-kit' ); ?></strong></legend>
+				<legend><strong><?php esc_html_e( 'Post types to scan:', 'media-cleanup-kit' ); ?></strong></legend>
 				<?php
 				foreach ( $post_types as $pt ) {
 					if ( 'attachment' === $pt->name ) {
@@ -183,7 +183,7 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 			</fieldset>
 
 			<fieldset style="margin-top:12px;">
-				<legend><strong><?php esc_html_e( 'Size slugs to include (optional):', 'image-kit' ); ?></strong></legend>
+				<legend><strong><?php esc_html_e( 'Size slugs to include (optional):', 'media-cleanup-kit' ); ?></strong></legend>
 				<?php
 				$registered_sizes = get_intermediate_image_sizes();
 				if ( ! in_array( 'full', $registered_sizes, true ) ) {
@@ -193,8 +193,8 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 				foreach ( $registered_sizes as $slug ) {
 					$slug_options[ $slug ] = $slug;
 				}
-				$slug_options['featured-image'] = __( 'Featured Image', 'image-kit' );
-				$slug_options['none']           = __( 'Unspecified', 'image-kit' );
+				$slug_options['featured-image'] = __( 'Featured Image', 'media-cleanup-kit' );
+				$slug_options['none']           = __( 'Unspecified', 'media-cleanup-kit' );
 
 				foreach ( $slug_options as $value => $label ) {
 					printf(
@@ -205,31 +205,31 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 				}
 				?>
 				<p class="description" style="margin-top:6px;">
-					<?php esc_html_e( 'Leave all unchecked to include every size slug.', 'image-kit' ); ?>
+					<?php esc_html_e( 'Leave all unchecked to include every size slug.', 'media-cleanup-kit' ); ?>
 				</p>
 			</fieldset>
 
 			<div style="margin:12px 0;">
 				<label>
-					<strong><?php esc_html_e( 'Size threshold (px):', 'image-kit' ); ?></strong>
+					<strong><?php esc_html_e( 'Size threshold (px):', 'media-cleanup-kit' ); ?></strong>
 					<input type="number" id="ik-lr-threshold" value="2048" min="0" class="small-text">
-					<span class="description"><?php esc_html_e( 'Min longest side. 0 or blank = include all images.', 'image-kit' ); ?></span>
+					<span class="description"><?php esc_html_e( 'Min longest side. 0 or blank = include all images.', 'media-cleanup-kit' ); ?></span>
 				</label>
 			</div>
 
 			<div style="margin:12px 0;">
 				<label>
-					<strong><?php esc_html_e( 'Date range (optional):', 'image-kit' ); ?></strong>
+					<strong><?php esc_html_e( 'Date range (optional):', 'media-cleanup-kit' ); ?></strong>
 					<input type="date" id="ik-lr-date-from" class="ik-lr-date-input">
 					<span>&ndash;</span>
 					<input type="date" id="ik-lr-date-to" class="ik-lr-date-input">
-					<span class="description"><?php esc_html_e( 'Filter by post publish date.', 'image-kit' ); ?></span>
+					<span class="description"><?php esc_html_e( 'Filter by post publish date.', 'media-cleanup-kit' ); ?></span>
 				</label>
 			</div>
 
 			<p>
 				<button type="button" id="ik-lr-scan" class="button button-primary">
-					<?php esc_html_e( 'Scan for Low-Resolution Images', 'image-kit' ); ?>
+					<?php esc_html_e( 'Scan for Low-Resolution Images', 'media-cleanup-kit' ); ?>
 				</button>
 			</p>
 		</div>
@@ -238,48 +238,48 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 		<div class="ik-panel ik-scan-results" id="ik-lr-results"></div>
 
 		<div id="ik-lr-handoff" class="ik-panel" style="display:none;margin-top:24px;">
-				<h3><?php esc_html_e( 'Next: match against your photo library', 'image-kit' ); ?></h3>
+				<h3><?php esc_html_e( 'Next: match against your photo library', 'media-cleanup-kit' ); ?></h3>
 				<p class="description">
-					<?php esc_html_e( 'Hand the selected images off to the offline photo-match script. The commands below use absolute paths for your install — run them from a working directory on your Mac.', 'image-kit' ); ?>
+					<?php esc_html_e( 'Hand the selected images off to the offline photo-match script. The commands below use absolute paths for your install — run them from a working directory on your Mac.', 'media-cleanup-kit' ); ?>
 				</p>
 
-				<h4><?php esc_html_e( '1. Download the selected images', 'image-kit' ); ?></h4>
+				<h4><?php esc_html_e( '1. Download the selected images', 'media-cleanup-kit' ); ?></h4>
 				<p class="description">
-					<?php esc_html_e( 'Click Export CSV above first — it also writes a sibling low-resolution-files.txt that the next command consumes.', 'image-kit' ); ?>
+					<?php esc_html_e( 'Click Export CSV above first — it also writes a sibling low-resolution-files.txt that the next command consumes.', 'media-cleanup-kit' ); ?>
 				</p>
 				<pre id="ik-lr-rsync-down" class="ik-code-block"></pre>
 
-				<h4><?php esc_html_e( '2. Run photo-match.py locally', 'image-kit' ); ?></h4>
+				<h4><?php esc_html_e( '2. Run photo-match.py locally', 'media-cleanup-kit' ); ?></h4>
 				<p class="description">
 					<?php
 					printf(
 						/* translators: %s: path to photo-match.py inside the plugin */
-						esc_html__( 'The script ships with the plugin at %s. Export your source photos (e.g. from Apple Photos) into ./exported-photos/ first.', 'image-kit' ),
+						esc_html__( 'The script ships with the plugin at %s. Export your source photos (e.g. from Apple Photos) into ./exported-photos/ first.', 'media-cleanup-kit' ),
 						'<code>' . esc_html( 'wp-content/plugins/image-kit/tools/photo-match.py' ) . '</code>'
 					);
 					?>
 				</p>
 				<pre id="ik-lr-pymatch-cmd" class="ik-code-block"></pre>
 
-				<h4><?php esc_html_e( '3. Upload the matched-photos directory', 'image-kit' ); ?></h4>
+				<h4><?php esc_html_e( '3. Upload the matched-photos directory', 'media-cleanup-kit' ); ?></h4>
 				<pre id="ik-lr-rsync-up" class="ik-code-block"></pre>
 
-				<h4><?php esc_html_e( '4. Apply matches', 'image-kit' ); ?></h4>
+				<h4><?php esc_html_e( '4. Apply matches', 'media-cleanup-kit' ); ?></h4>
 				<p>
 					<button type="button" id="ik-lr-scan-matched" class="button button-primary">
-						<?php esc_html_e( 'Scan matched-photos directory', 'image-kit' ); ?>
+						<?php esc_html_e( 'Scan matched-photos directory', 'media-cleanup-kit' ); ?>
 					</button>
 				</p>
 				<div id="ik-lr-apply-errors" style="display:none;"></div>
 				<div id="ik-lr-apply-results" style="display:none;">
 					<p id="ik-lr-apply-summary"></p>
 					<p>
-						<label><input type="checkbox" id="ik-lr-apply-select-all" checked> <strong><?php esc_html_e( 'Select all', 'image-kit' ); ?></strong></label>
+						<label><input type="checkbox" id="ik-lr-apply-select-all" checked> <strong><?php esc_html_e( 'Select all', 'media-cleanup-kit' ); ?></strong></label>
 						<button type="button" id="ik-lr-apply-btn" class="button button-primary" style="margin-left:12px;">
-							<?php esc_html_e( 'Apply Selected', 'image-kit' ); ?>
+							<?php esc_html_e( 'Apply Selected', 'media-cleanup-kit' ); ?>
 						</button>
 						<button type="button" id="ik-lr-cleanup-btn" class="button" style="margin-left:8px;display:none;">
-							<?php esc_html_e( 'Delete matched-photos directory', 'image-kit' ); ?>
+							<?php esc_html_e( 'Delete matched-photos directory', 'media-cleanup-kit' ); ?>
 						</button>
 					</p>
 					<div id="ik-lr-apply-progress" class="ik-progress" style="display:none;">
@@ -290,11 +290,11 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 						<thead>
 							<tr>
 								<th class="ik-col-check"></th>
-								<th><?php esc_html_e( 'Attachment', 'image-kit' ); ?></th>
-								<th><?php esc_html_e( 'Original', 'image-kit' ); ?></th>
-								<th><?php esc_html_e( 'Replacement', 'image-kit' ); ?></th>
-								<th><?php esc_html_e( 'Confidence', 'image-kit' ); ?></th>
-								<th><?php esc_html_e( 'Status', 'image-kit' ); ?></th>
+								<th><?php esc_html_e( 'Attachment', 'media-cleanup-kit' ); ?></th>
+								<th><?php esc_html_e( 'Original', 'media-cleanup-kit' ); ?></th>
+								<th><?php esc_html_e( 'Replacement', 'media-cleanup-kit' ); ?></th>
+								<th><?php esc_html_e( 'Confidence', 'media-cleanup-kit' ); ?></th>
+								<th><?php esc_html_e( 'Status', 'media-cleanup-kit' ); ?></th>
 							</tr>
 						</thead>
 						<tbody id="ik-lr-apply-tbody"></tbody>

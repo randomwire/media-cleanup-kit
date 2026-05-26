@@ -1,18 +1,22 @@
 <?php
 /**
- * Plugin Name: Image Kit
- * Description: Tools for cleaning up large WordPress media libraries — find broken images, upgrade downsized variants, reorganize uploads, remove unused files, and detect low-resolution images.
- * Version: 1.0.35
- * Author: David Gilbert
- * Requires PHP: 7.4
+ * Plugin Name:       Media Cleanup Kit
+ * Plugin URI:        https://github.com/randomwire/media-cleanup-kit
+ * Description:       Tools for cleaning up large WordPress media libraries — find broken images, restore full-size variants, repair image blocks, flatten uploads, import orphan files, delete unused files, replace low-resolution images, and attach unparented media.
+ * Version:           1.0.36
  * Requires at least: 5.0
- * License: GPL-2.0-or-later
- * Text Domain: image-kit
+ * Requires PHP:      7.4
+ * Author:            David Gilbert
+ * Author URI:        https://randomwire.com
+ * License:           GPL v2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:       media-cleanup-kit
+ * Domain Path:       /languages
  */
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'IMAGE_KIT_VERSION', '1.0.35' );
+define( 'IMAGE_KIT_VERSION', '1.0.36' );
 define( 'IMAGE_KIT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'IMAGE_KIT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'IMAGE_KIT_PLUGIN_FILE', __FILE__ );
@@ -63,6 +67,17 @@ spl_autoload_register( function ( $class ) {
 		require_once $file;
 	}
 } );
+
+// Load translations. Early-priority hook so all subsequent strings see the
+// loaded domain. WP.org translate.wordpress.org auto-loads once published,
+// but the call is still required.
+add_action( 'plugins_loaded', function () {
+	load_plugin_textdomain(
+		'media-cleanup-kit',
+		false,
+		dirname( plugin_basename( IMAGE_KIT_PLUGIN_FILE ) ) . '/languages'
+	);
+}, 5 );
 
 // Bootstrap.
 add_action( 'plugins_loaded', function () {

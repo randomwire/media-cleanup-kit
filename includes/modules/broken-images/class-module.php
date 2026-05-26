@@ -20,11 +20,11 @@ class Image_Kit_Module_Broken_Images extends Image_Kit_Module {
 	}
 
 	public function get_name(): string {
-		return __( 'Find Broken Images', 'image-kit' );
+		return __( 'Find Broken Images', 'media-cleanup-kit' );
 	}
 
 	public function get_description(): string {
-		return __( 'Scan posts and pages for internal image embeds and featured images where the file is missing from the uploads directory.', 'image-kit' );
+		return __( 'Scan posts and pages for internal image embeds and featured images where the file is missing from the uploads directory.', 'media-cleanup-kit' );
 	}
 
 	public function register_ajax_handlers(): void {
@@ -60,7 +60,7 @@ class Image_Kit_Module_Broken_Images extends Image_Kit_Module {
 		check_ajax_referer( Image_Kit_Admin_Page::NONCE_ACTION, 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'image-kit' ), 403 );
+			wp_send_json_error( __( 'Permission denied.', 'media-cleanup-kit' ), 403 );
 		}
 
 		$scanner     = new Image_Kit_Broken_Images_Scanner();
@@ -106,7 +106,7 @@ class Image_Kit_Module_Broken_Images extends Image_Kit_Module {
 		check_ajax_referer( Image_Kit_Admin_Page::NONCE_ACTION, 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'image-kit' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'media-cleanup-kit' ) ), 403 );
 		}
 
 		$post_id    = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
@@ -114,7 +114,7 @@ class Image_Kit_Module_Broken_Images extends Image_Kit_Module {
 		$block_type = isset( $_POST['block_type'] ) ? sanitize_text_field( wp_unslash( $_POST['block_type'] ) ) : '';
 
 		if ( ! $post_id || '' === $image_url || '' === $block_type ) {
-			wp_send_json_error( array( 'message' => __( 'Missing required parameters.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Missing required parameters.', 'media-cleanup-kit' ) ) );
 		}
 
 		$scanner = new Image_Kit_Broken_Images_Scanner();
@@ -136,7 +136,7 @@ class Image_Kit_Module_Broken_Images extends Image_Kit_Module {
 				<?php
 				printf(
 					/* translators: %s: number of posts */
-					esc_html__( 'Found %s post(s) containing image references.', 'image-kit' ),
+					esc_html__( 'Found %s post(s) containing image references.', 'media-cleanup-kit' ),
 					'<strong>' . esc_html( number_format_i18n( $post_count ) ) . '</strong>'
 				);
 				?>
@@ -144,11 +144,11 @@ class Image_Kit_Module_Broken_Images extends Image_Kit_Module {
 			<?php if ( $post_count > 0 ) : ?>
 				<p>
 					<button type="button" id="ik-bi-scan" class="button button-primary" data-total="<?php echo (int) $post_count; ?>">
-						<?php esc_html_e( 'Scan for Broken Images', 'image-kit' ); ?>
+						<?php esc_html_e( 'Scan for Broken Images', 'media-cleanup-kit' ); ?>
 					</button>
 				</p>
 			<?php else : ?>
-				<p><em><?php esc_html_e( 'No posts with image references found.', 'image-kit' ); ?></em></p>
+				<p><em><?php esc_html_e( 'No posts with image references found.', 'media-cleanup-kit' ); ?></em></p>
 			<?php endif; ?>
 		</div>
 

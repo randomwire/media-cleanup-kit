@@ -18,12 +18,32 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 SLUG="$(basename "$PWD")"
-MAIN_FILE="${SLUG}.php"
 
-if [[ ! -f "$MAIN_FILE" ]]; then
-	echo "Error: expected main plugin file ${MAIN_FILE} in $(pwd)" >&2
+# Find the main plugin file — the .php at root that carries a Plugin Name
+# header. Prefer ${SLUG}.php when present; otherwise scan and pick the first
+# match. This survives directory renames that haven't yet been mirrored
+# in the main filename (or vice versa).
+if [[ -f "${SLUG}.php" ]] && grep -qE '^[[:space:]]*\*?[[:space:]]*Plugin Name:' "${SLUG}.php"; then
+	MAIN_FILE="${SLUG}.php"
+else
+	MAIN_FILE=""
+	for f in *.php; do
+		[[ -f "$f" ]] || continue
+		if grep -qE '^[[:space:]]*\*?[[:space:]]*Plugin Name:' "$f"; then
+			MAIN_FILE="$f"
+			break
+		fi
+	done
+fi
+
+if [[ -z "$MAIN_FILE" || ! -f "$MAIN_FILE" ]]; then
+	echo "Error: could not locate a plugin main file (no *.php with a Plugin Name: header in $(pwd))" >&2
 	exit 1
 fi
+
+# Re-derive SLUG from the main filename so the output zip name follows the
+# plugin's actual identity even if the parent directory has a different name.
+SLUG="${MAIN_FILE%.php}"
 
 VERSION="$(grep -m1 -E '^[[:space:]]*\*?[[:space:]]*Version:' "$MAIN_FILE" \
 	| sed -E 's/^[[:space:]]*\*?[[:space:]]*Version:[[:space:]]*//' \

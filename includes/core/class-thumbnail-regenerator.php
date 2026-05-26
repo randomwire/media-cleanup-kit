@@ -39,12 +39,12 @@ class Image_Kit_Core_Thumbnail_Regenerator {
 		$old_file = get_attached_file( $attachment_id );
 		if ( ! $old_file ) {
 			$this->reset_server_protections();
-			return new \WP_Error( 'no_attached_file', __( 'Attachment has no associated file.', 'image-kit' ) );
+			return new \WP_Error( 'no_attached_file', __( 'Attachment has no associated file.', 'media-cleanup-kit' ) );
 		}
 
 		if ( ! file_exists( $new_file_path ) ) {
 			$this->reset_server_protections();
-			return new \WP_Error( 'source_missing', __( 'New file does not exist.', 'image-kit' ) );
+			return new \WP_Error( 'source_missing', __( 'New file does not exist.', 'media-cleanup-kit' ) );
 		}
 
 		// Delete old thumbnails.
@@ -62,7 +62,7 @@ class Image_Kit_Core_Thumbnail_Regenerator {
 		// Copy new file over old path.
 		if ( ! copy( $new_file_path, $old_file ) ) {
 			$this->reset_server_protections();
-			return new \WP_Error( 'copy_failed', __( 'Failed to copy new file over old file.', 'image-kit' ) );
+			return new \WP_Error( 'copy_failed', __( 'Failed to copy new file over old file.', 'media-cleanup-kit' ) );
 		}
 
 		// Temporarily reduce image sizes during regeneration.
@@ -83,7 +83,7 @@ class Image_Kit_Core_Thumbnail_Regenerator {
 
 		if ( empty( $new_meta ) ) {
 			$this->reset_server_protections();
-			return new \WP_Error( 'metadata_failed', __( 'Failed to generate attachment metadata.', 'image-kit' ) );
+			return new \WP_Error( 'metadata_failed', __( 'Failed to generate attachment metadata.', 'media-cleanup-kit' ) );
 		}
 
 		wp_update_attachment_metadata( $attachment_id, $new_meta );

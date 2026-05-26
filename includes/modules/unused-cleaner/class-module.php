@@ -19,11 +19,11 @@ class Image_Kit_Module_Unused_Cleaner extends Image_Kit_Module {
 	}
 
 	public function get_name(): string {
-		return __( 'Delete Unused Files', 'image-kit' );
+		return __( 'Delete Unused Files', 'media-cleanup-kit' );
 	}
 
 	public function get_description(): string {
-		return __( 'Find and safely delete orphaned image files not referenced anywhere in WordPress.', 'image-kit' );
+		return __( 'Find and safely delete orphaned image files not referenced anywhere in WordPress.', 'media-cleanup-kit' );
 	}
 
 	public function register_ajax_handlers(): void {
@@ -57,20 +57,22 @@ class Image_Kit_Module_Unused_Cleaner extends Image_Kit_Module {
 	private function verify_ajax(): void {
 		check_ajax_referer( Image_Kit_Admin_Page::NONCE_ACTION, 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'media-cleanup-kit' ) ) );
 		}
 	}
 
 	public function ajax_scan_batch(): void {
 		$this->verify_ajax();
-		set_time_limit( 120 );
+		if ( function_exists( 'set_time_limit' ) ) {
+			set_time_limit( 120 );
+		}
 
 		$scanner = new Image_Kit_Unused_Cleaner_Scanner();
 		$offset  = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
 
 		$real_path = realpath( wp_upload_dir()['basedir'] );
 		if ( false === $real_path || ! is_dir( $real_path ) ) {
-			wp_send_json_error( array( 'message' => __( 'Uploads directory not found.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Uploads directory not found.', 'media-cleanup-kit' ) ) );
 		}
 
 		$listing = $scanner->list_images( $real_path, $offset );
@@ -112,12 +114,12 @@ class Image_Kit_Module_Unused_Cleaner extends Image_Kit_Module {
 		$attachment_ids = isset( $_POST['attachment_ids'] ) ? array_map( 'absint', wp_unslash( $_POST['attachment_ids'] ) ) : array();
 
 		if ( empty( $files ) ) {
-			wp_send_json_error( array( 'message' => __( 'No files specified.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'No files specified.', 'media-cleanup-kit' ) ) );
 		}
 
 		$real_path = realpath( wp_upload_dir()['basedir'] );
 		if ( false === $real_path || ! is_dir( $real_path ) ) {
-			wp_send_json_error( array( 'message' => __( 'Uploads directory not found.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Uploads directory not found.', 'media-cleanup-kit' ) ) );
 		}
 
 		$results = $scanner->delete_files( $files, $real_path );
@@ -145,13 +147,13 @@ class Image_Kit_Module_Unused_Cleaner extends Image_Kit_Module {
 				<?php
 				printf(
 					/* translators: %s: absolute path to the WordPress uploads directory. */
-					esc_html__( 'Scans the WordPress uploads directory (%s) for image files not referenced anywhere on the site.', 'image-kit' ),
+					esc_html__( 'Scans the WordPress uploads directory (%s) for image files not referenced anywhere on the site.', 'media-cleanup-kit' ),
 					'<code>' . esc_html( wp_upload_dir()['basedir'] ) . '</code>'
 				);
 				?>
 			</p>
 			<p>
-				<button id="ik-uc-scan-btn" class="button button-primary"><?php esc_html_e( 'Scan Uploads', 'image-kit' ); ?></button>
+				<button id="ik-uc-scan-btn" class="button button-primary"><?php esc_html_e( 'Scan Uploads', 'media-cleanup-kit' ); ?></button>
 			</p>
 		</div>
 

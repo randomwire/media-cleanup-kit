@@ -19,11 +19,11 @@ class Image_Kit_Module_Orphan_Importer extends Image_Kit_Module {
 	}
 
 	public function get_name(): string {
-		return __( 'Import Orphan Files', 'image-kit' );
+		return __( 'Import Orphan Files', 'media-cleanup-kit' );
 	}
 
 	public function get_description(): string {
-		return __( 'Find image files in the uploads directory that aren\'t in the media library and import them as attachments.', 'image-kit' );
+		return __( 'Find image files in the uploads directory that aren\'t in the media library and import them as attachments.', 'media-cleanup-kit' );
 	}
 
 	public function register_ajax_handlers(): void {
@@ -60,13 +60,15 @@ class Image_Kit_Module_Orphan_Importer extends Image_Kit_Module {
 	private function verify_ajax(): void {
 		check_ajax_referer( Image_Kit_Admin_Page::NONCE_ACTION, 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Permission denied.', 'image-kit' ), 403 );
+			wp_send_json_error( __( 'Permission denied.', 'media-cleanup-kit' ), 403 );
 		}
 	}
 
 	public function ajax_init_scan(): void {
 		$this->verify_ajax();
-		set_time_limit( 120 );
+		if ( function_exists( 'set_time_limit' ) ) {
+			set_time_limit( 120 );
+		}
 
 		$scanner = new Image_Kit_Orphan_Importer_Scanner();
 		$result  = $scanner->init_scan();
@@ -76,13 +78,15 @@ class Image_Kit_Module_Orphan_Importer extends Image_Kit_Module {
 
 	public function ajax_scan_batch(): void {
 		$this->verify_ajax();
-		set_time_limit( 60 );
+		if ( function_exists( 'set_time_limit' ) ) {
+			set_time_limit( 60 );
+		}
 
 		$token  = isset( $_POST['token'] ) ? sanitize_key( wp_unslash( $_POST['token'] ) ) : '';
 		$offset = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
 
 		if ( '' === $token ) {
-			wp_send_json_error( array( 'message' => __( 'Missing scan token.', 'image-kit' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Missing scan token.', 'media-cleanup-kit' ) ) );
 		}
 
 		$scanner = new Image_Kit_Orphan_Importer_Scanner();
@@ -115,7 +119,7 @@ class Image_Kit_Module_Orphan_Importer extends Image_Kit_Module {
 			: array();
 
 		if ( empty( $paths ) ) {
-			wp_send_json_error( __( 'No files specified.', 'image-kit' ) );
+			wp_send_json_error( __( 'No files specified.', 'media-cleanup-kit' ) );
 		}
 
 		$scanner = new Image_Kit_Orphan_Importer_Scanner();
@@ -137,13 +141,13 @@ class Image_Kit_Module_Orphan_Importer extends Image_Kit_Module {
 	public function render_tab_content(): void {
 		?>
 		<div class="ik-panel ik-scan-config" id="ik-oi-config">
-			<h3><?php esc_html_e( 'Scan for Orphan Files', 'image-kit' ); ?></h3>
-			<p><?php esc_html_e( 'Scans uploads for image files not in the media library. Thumbnail variants are grouped with their originals.', 'image-kit' ); ?></p>
+			<h3><?php esc_html_e( 'Scan for Orphan Files', 'media-cleanup-kit' ); ?></h3>
+			<p><?php esc_html_e( 'Scans uploads for image files not in the media library. Thumbnail variants are grouped with their originals.', 'media-cleanup-kit' ); ?></p>
 			<p>
-				<button type="button" id="ik-oi-scan" class="button button-primary"><?php esc_html_e( 'Scan for Orphan Files', 'image-kit' ); ?></button>
+				<button type="button" id="ik-oi-scan" class="button button-primary"><?php esc_html_e( 'Scan for Orphan Files', 'media-cleanup-kit' ); ?></button>
 			</p>
 			<div id="ik-oi-indexing" style="display:none;">
-				<p><em><?php esc_html_e( 'Indexing files…', 'image-kit' ); ?></em></p>
+				<p><em><?php esc_html_e( 'Indexing files…', 'media-cleanup-kit' ); ?></em></p>
 			</div>
 		</div>
 
