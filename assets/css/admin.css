@@ -727,6 +727,12 @@ button:disabled {
 	color: #d63638 !important;
 }
 
+.ik-scan-apply-armed {
+	background: #fff3cd !important;
+	border-color: #b88500 !important;
+	color: #806000 !important;
+}
+
 .ik-scan-apply-banner {
 	position: sticky;
 	top: 32px;

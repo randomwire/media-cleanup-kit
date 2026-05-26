@@ -83,6 +83,7 @@ class Image_Kit_Plugin {
 			'markup-audit'    => 'Markup_Audit',
 			'relocator'       => 'Relocator',
 			'orphan-importer' => 'Orphan_Importer',
+			'reattach'        => 'Reattach',
 			'unused-cleaner'  => 'Unused_Cleaner',
 			'low-resolution'  => 'Low_Resolution',
 		);

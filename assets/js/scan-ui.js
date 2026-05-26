@@ -299,7 +299,39 @@
 			}
 
 			const applyBtn = toolbarEl.querySelector('.ik-scan-apply-btn');
-			if (applyBtn) applyBtn.addEventListener('click', startBulkApply);
+			if (applyBtn) {
+				// Two-step inline confirmation when more than one row is selected.
+				// Single-row apply fires immediately (the selection IS the
+				// deliberate action). Mirrors the Discard pattern — sidesteps
+				// browsers that silently suppress window.confirm().
+				const originalApplyLabel = applyBtn.textContent;
+				let applyArmed = false;
+				let applyArmTimer = null;
+				const disarmApply = function () {
+					applyArmed = false;
+					applyBtn.textContent = originalApplyLabel;
+					applyBtn.classList.remove('ik-scan-apply-armed');
+					if (applyArmTimer) { clearTimeout(applyArmTimer); applyArmTimer = null; }
+				};
+				applyBtn.addEventListener('click', function () {
+					if (state.selection.size <= 1) {
+						startBulkApply();
+						return;
+					}
+					if (!applyArmed) {
+						applyArmed = true;
+						const msg = cfg.apply.confirmMessage
+							? cfg.apply.confirmMessage(state.selection.size)
+							: 'Apply ' + state.selection.size + ' selected items? This cannot be undone.';
+						applyBtn.textContent = 'Click again — ' + msg;
+						applyBtn.classList.add('ik-scan-apply-armed');
+						applyArmTimer = setTimeout(disarmApply, 6000);
+						return;
+					}
+					disarmApply();
+					startBulkApply();
+				});
+			}
 
 			const exportBtn = toolbarEl.querySelector('.ik-scan-export-btn');
 			if (exportBtn) exportBtn.addEventListener('click', doExportCSV);
@@ -847,10 +879,9 @@
 			}).filter(Boolean);
 			if (items.length === 0) return;
 
-			const msg = cfg.apply.confirmMessage
-				? cfg.apply.confirmMessage(items.length)
-				: 'Apply ' + items.length + ' selected items? This cannot be undone.';
-			if (items.length > 1 && !confirm(msg)) return;
+			// Multi-row confirmation handled by the two-step gate on the Apply
+			// button in renderToolbar. By the time we get here, the user has
+			// already confirmed.
 
 			state.applyQueue = items;
 			state.applyAbort = false;

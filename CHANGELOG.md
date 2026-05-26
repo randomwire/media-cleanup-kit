@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.35 - 2026-05-26
+
+### Fixed
+- **Attach Unparented Media: false-positive matches via stale `wp-image-{ID}` classes.** The previous resolver treated `wp-image-N`, `"id":N`, `"mediaId":N`, and `attachment_N` as first-class match signals on par with the actual filename appearing in the post. In practice those metadata references frequently outlive the underlying file — when an image is replaced or removed in the block editor, the class can stick around on a now-different `<img>`, producing matches like *"attachment `bbc-speed-test.png` should be attached to post 'Exploring Kanazawa' because the post contains `class=\"wp-image-4155\"`"* even when the file is not in that post at all. The resolver now requires the file path or filename to actually appear in the candidate post; weak ID-based references are used only to *prefer* one strong match over another (when multiple posts contain the file). Classic `[gallery ids="…"]` shortcode remains a legitimate standalone signal — it renders the attachment by ID directly — and is now matched via a precise id-list parse instead of substring regex. Match types in the UI collapse to **Featured image / Content URL / Gallery** — the three signals that are reliably correct.
+
+## 1.0.34 - 2026-05-26
+
+### Fixed
+- **Bulk Apply button appeared inert** in every module that uses the scan-UI helper when more than one row was selected. The bulk-apply path used `window.confirm()` to confirm multi-row applies, which modern Chromium/WebKit can silently suppress for users who have dismissed prior dialogs on the same origin — the suppression returns `false`, so the click was bailed out without ever showing a prompt. Same class of bug fixed for Discard in 1.0.28. Replaced with the same two-step inline confirmation: single-row applies fire immediately (the selection IS the deliberate action); multi-row applies arm the Apply button (turns amber, label changes to "Click again — *<confirm message>*") and require a second click within 6 seconds. Affects every module with a bulk apply (Restore Full Size, Repair Image Blocks, Find Broken Images, Flatten Uploads, Import Orphan Files, Delete Unused Files, Attach Unparented Media).
+
+## 1.0.33 - 2026-05-26
+
+### Fixed
+- **Attach Unparented Media: slow scan start.** The initial scanner ran one featured-image lookup and one content `LIKE` query *per attachment*, so a batch of 50 fired ~100 queries against `wp_posts` and could feel frozen on large sites. Rewrote the batch resolver to fire exactly **two** queries per scan call regardless of batch size: one combined featured-image lookup across all attachments in the batch, one combined content-candidate query that returns every post containing any matching needle. Per-attachment resolution now happens in PHP via `strpos` against the shared result set. Roughly 25× faster on dense sites.
+
+## 1.0.32 - 2026-05-26
+
+### Added
+- **Attach Unparented Media** — new module. Finds attachments with `post_parent = 0` and proposes the first post/page that references them, then attaches in one click (per-row) or bulk. Reference detection covers featured-image meta, `wp-image-{id}` CSS classes, Gutenberg block JSON (`"id":N` / `"mediaId":N`), gallery shortcodes, caption shortcodes, and content URLs with `-WxH` sized variants. Match type is shown as a column so the user can see why each parent was chosen; featured-image wins ties because it's the more deliberate relationship. Supersedes the standalone Post Attach plugin, which can now be deactivated and removed.
+
 ## 1.0.31 - 2026-05-26
 
 ### Changed
