@@ -78,11 +78,13 @@ class Image_Kit_Plugin {
 	 */
 	private function register_built_in_modules(): void {
 		$module_dirs = array(
-			'broken-images'  => 'Broken_Images',
-			'image-upgrader' => 'Image_Upgrader',
-			'relocator'      => 'Relocator',
-			'unused-cleaner' => 'Unused_Cleaner',
-			'low-resolution' => 'Low_Resolution',
+			'broken-images'   => 'Broken_Images',
+			'image-upgrader'  => 'Image_Upgrader',
+			'markup-audit'    => 'Markup_Audit',
+			'relocator'       => 'Relocator',
+			'orphan-importer' => 'Orphan_Importer',
+			'unused-cleaner'  => 'Unused_Cleaner',
+			'low-resolution'  => 'Low_Resolution',
 		);
 
 		foreach ( $module_dirs as $dir => $class_suffix ) {

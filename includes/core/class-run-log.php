@@ -41,10 +41,8 @@ class Image_Kit_Core_Run_Log {
 			status varchar(20) NOT NULL DEFAULT 'running',
 			post_types varchar(255) NOT NULL DEFAULT '',
 			posts_scanned int(11) NOT NULL DEFAULT 0,
-			posts_updated int(11) NOT NULL DEFAULT 0,
 			images_replaced int(11) NOT NULL DEFAULT 0,
 			images_skipped int(11) NOT NULL DEFAULT 0,
-			error_count int(11) NOT NULL DEFAULT 0,
 			PRIMARY KEY (id),
 			KEY status (status)
 		) $charset_collate;";
@@ -67,6 +65,32 @@ class Image_Kit_Core_Run_Log {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql_runs );
 		dbDelta( $sql_items );
+
+		$this->migrate_drop_history_columns();
+	}
+
+	/**
+	 * One-time migration: drop the unused `posts_updated` and `error_count`
+	 * columns from `wp_image_kit_upgrader_runs`. They existed only to feed a
+	 * never-built History UI and bloated every update_run() call site.
+	 * dbDelta won't drop columns on its own; do it explicitly, idempotently.
+	 */
+	private function migrate_drop_history_columns() {
+		global $wpdb;
+		$schema_version = (int) get_option( 'image_kit_run_log_schema_version', 0 );
+		if ( $schema_version >= 2 ) {
+			return;
+		}
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery
+		$cols = $wpdb->get_col( "SHOW COLUMNS FROM {$this->runs_table}", 0 );
+		if ( in_array( 'posts_updated', $cols, true ) ) {
+			$wpdb->query( "ALTER TABLE {$this->runs_table} DROP COLUMN posts_updated" );
+		}
+		if ( in_array( 'error_count', $cols, true ) ) {
+			$wpdb->query( "ALTER TABLE {$this->runs_table} DROP COLUMN error_count" );
+		}
+		// phpcs:enable
+		update_option( 'image_kit_run_log_schema_version', 2, true );
 	}
 
 	/**
@@ -283,28 +307,20 @@ class Image_Kit_Core_Run_Log {
 	 * @param array $replacements Replacement data array.
 	 * @return bool
 	 */
-	public function update_item_replacements( $item_id, $replacements ) {
+	public function update_item_replacements( $item_id, $replacements, $counts = array() ) {
 		global $wpdb;
+		$data = array( 'replacements' => wp_json_encode( $replacements ) );
+		if ( isset( $counts['images_replaced'] ) ) {
+			$data['images_replaced'] = (int) $counts['images_replaced'];
+		}
+		if ( isset( $counts['images_skipped'] ) ) {
+			$data['images_skipped'] = (int) $counts['images_skipped'];
+		}
 		return false !== $wpdb->update(
 			$this->items_table,
-			array( 'replacements' => wp_json_encode( $replacements ) ),
+			$data,
 			array( 'id' => absint( $item_id ) )
 		);
-	}
-
-	/**
-	 * Delete a run and all its items.
-	 *
-	 * @param int $run_id Run ID.
-	 * @return bool
-	 */
-	public function delete_run( $run_id ) {
-		global $wpdb;
-
-		$run_id = absint( $run_id );
-
-		$wpdb->delete( $this->items_table, array( 'run_id' => $run_id ) );
-		return false !== $wpdb->delete( $this->runs_table, array( 'id' => $run_id ) );
 	}
 
 	/**
@@ -345,14 +361,54 @@ class Image_Kit_Core_Run_Log {
 	}
 
 	/**
+	 * Mark any 'running' / 'applying' run older than $max_age_seconds as
+	 * 'failed'. Self-heal for abandoned scans (closed browser, JS error
+	 * before the cancel AJAX could fire).
+	 *
+	 * @param int            $max_age_seconds Grace period before a run is considered stale. Default 5 minutes.
+	 * @param string|string[] $modes          Optional mode filter — only clear runs whose `mode` is in this list.
+	 *                                        Pass an empty array (default) to clear regardless of mode.
+	 * @return int Number of runs cleared.
+	 */
+	public function clear_stale_active_runs( int $max_age_seconds = 300, $modes = array() ) {
+		global $wpdb;
+
+		$cutoff = gmdate( 'Y-m-d H:i:s', time() - $max_age_seconds );
+
+		if ( ! empty( $modes ) ) {
+			$modes        = array_map( 'sanitize_key', (array) $modes );
+			$placeholders = implode( ',', array_fill( 0, count( $modes ), '%s' ) );
+			$sql          = "UPDATE {$this->runs_table} SET status = 'failed', completed_at = %s WHERE status IN ('running', 'applying') AND mode IN ($placeholders) AND started_at < %s";
+			$params       = array_merge( array( current_time( 'mysql', true ) ), $modes, array( $cutoff ) );
+			return (int) $wpdb->query( $wpdb->prepare( $sql, $params ) );
+		}
+
+		return (int) $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$this->runs_table} SET status = 'failed', completed_at = %s WHERE status IN ('running', 'applying') AND started_at < %s",
+				current_time( 'mysql', true ),
+				$cutoff
+			)
+		);
+	}
+
+	/**
 	 * Get the most recent pending review (for auto-restore on page load).
 	 *
 	 * @return object|null
 	 */
-	public function get_pending_review() {
+	public function get_pending_review( $modes = array() ) {
 		global $wpdb;
 
 		$cutoff = gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS );
+
+		if ( ! empty( $modes ) ) {
+			$modes        = array_map( 'sanitize_key', (array) $modes );
+			$placeholders = implode( ',', array_fill( 0, count( $modes ), '%s' ) );
+			$sql          = "SELECT * FROM {$this->runs_table} WHERE status IN ('pending_review', 'pending_resolution') AND mode IN ($placeholders) AND started_at > %s ORDER BY id DESC LIMIT 1";
+			$params       = array_merge( $modes, array( $cutoff ) );
+			return $wpdb->get_row( $wpdb->prepare( $sql, $params ) );
+		}
 
 		return $wpdb->get_row(
 			$wpdb->prepare(

@@ -10,6 +10,7 @@
 defined( 'ABSPATH' ) || exit;
 
 require_once __DIR__ . '/class-scanner.php';
+require_once __DIR__ . '/class-apply.php';
 
 class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 
@@ -21,7 +22,7 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 	}
 
 	public function get_name(): string {
-		return __( 'Low Resolution', 'image-kit' );
+		return __( 'Replace Low-Res Images', 'image-kit' );
 	}
 
 	public function get_description(): string {
@@ -30,21 +31,39 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 
 	public function register_ajax_handlers(): void {
 		add_action( 'wp_ajax_' . $this->ajax_action( 'scan' ), array( $this, 'ajax_scan' ) );
+		add_action( 'wp_ajax_' . $this->ajax_action( 'scan_matched' ), array( $this, 'ajax_scan_matched' ) );
+		add_action( 'wp_ajax_' . $this->ajax_action( 'apply_matched' ), array( $this, 'ajax_apply_matched' ) );
+		add_action( 'wp_ajax_' . $this->ajax_action( 'cleanup_matched' ), array( $this, 'ajax_cleanup_matched' ) );
 	}
 
 	public function enqueue_assets(): void {
 		wp_enqueue_script(
-			'image-kit-low-resolution',
-			IMAGE_KIT_PLUGIN_URL . 'assets/js/low-resolution.js',
+			'image-kit-scan-ui',
+			IMAGE_KIT_PLUGIN_URL . 'assets/js/scan-ui.js',
 			array( 'image-kit-admin' ),
 			IMAGE_KIT_VERSION,
 			true
 		);
 
+		wp_enqueue_script(
+			'image-kit-low-resolution',
+			IMAGE_KIT_PLUGIN_URL . 'assets/js/low-resolution.js',
+			array( 'image-kit-scan-ui' ),
+			IMAGE_KIT_VERSION,
+			true
+		);
+
+		$uploads = wp_upload_dir();
+
 		wp_localize_script( 'image-kit-low-resolution', 'imageKitLowRes', array(
-			'action'    => $this->ajax_action( 'scan' ),
-			'batchSize' => self::BATCH_SIZE,
-			'pageSize'  => self::PAGE_SIZE,
+			'action'              => $this->ajax_action( 'scan' ),
+			'scanMatchedAction'   => $this->ajax_action( 'scan_matched' ),
+			'applyMatchedAction'  => $this->ajax_action( 'apply_matched' ),
+			'cleanupMatchedAction'=> $this->ajax_action( 'cleanup_matched' ),
+			'batchSize'           => self::BATCH_SIZE,
+			'pageSize'            => self::PAGE_SIZE,
+			'uploadsBasedir'      => $uploads['basedir'],
+			'matchedDirName'      => 'matched-photos',
 		) );
 	}
 
@@ -67,22 +86,85 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 		$date_to     = isset( $_POST['date_to'] ) ? sanitize_text_field( wp_unslash( $_POST['date_to'] ) ) : '';
 		$known_total = absint( $_POST['total_posts'] ?? 0 );
 
+		$size_slugs = array();
+		if ( isset( $_POST['size_slugs'] ) ) {
+			foreach ( wp_unslash( (array) $_POST['size_slugs'] ) as $raw_slug ) {
+				$slug = sanitize_key( $raw_slug );
+				$size_slugs[] = ( 'none' === $slug ) ? '' : $slug;
+			}
+		}
+
 		$scanner = new Image_Kit_Low_Resolution_Scanner();
-		$result  = $scanner->scan_batch( $post_types, $offset, self::BATCH_SIZE, $threshold, $date_from, $date_to, $known_total );
+		$result  = $scanner->scan_batch( $post_types, $offset, self::BATCH_SIZE, $threshold, $date_from, $date_to, $known_total, $size_slugs );
+
+		// Stamp each item with a stable id (helper rowKey).
+		$idx = $offset * 100;
+		foreach ( $result['items'] as &$item ) {
+			$item['id'] = ++$idx;
+		}
+		unset( $item );
 
 		wp_send_json_success( array(
-			'items'       => $result['items'],
-			'offset'      => $result['offset'],
-			'total_posts' => $result['total_posts'],
-			'done'        => $result['done'],
+			'items'    => $result['items'],
+			'offset'   => $result['offset'],
+			'total'    => $result['total_posts'],
+			'done'     => $result['done'],
+			'progress' => array(
+				'posts_scanned' => $result['offset'],
+			),
+			'log_lines' => array(),
 		) );
+	}
+
+	private function verify_ajax(): void {
+		check_ajax_referer( Image_Kit_Admin_Page::NONCE_ACTION, 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'image-kit' ) ), 403 );
+		}
+	}
+
+	public function ajax_scan_matched(): void {
+		$this->verify_ajax();
+		$apply  = new Image_Kit_Low_Resolution_Apply();
+		$result = $apply->scan_matched();
+		if ( ! $result['ok'] ) {
+			wp_send_json_error( array(
+				'message' => __( 'Could not scan matched-photos directory.', 'image-kit' ),
+				'details' => $result['errors'],
+			) );
+		}
+		wp_send_json_success( array( 'items' => $result['items'] ) );
+	}
+
+	public function ajax_apply_matched(): void {
+		$this->verify_ajax();
+		$attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
+		if ( ! $attachment_id ) {
+			wp_send_json_error( array( 'message' => __( 'Missing attachment_id.', 'image-kit' ) ) );
+		}
+		$apply  = new Image_Kit_Low_Resolution_Apply();
+		$result = $apply->apply_one( $attachment_id );
+		if ( ! $result['success'] ) {
+			wp_send_json_error( $result );
+		}
+		wp_send_json_success( $result );
+	}
+
+	public function ajax_cleanup_matched(): void {
+		$this->verify_ajax();
+		$apply  = new Image_Kit_Low_Resolution_Apply();
+		$result = $apply->cleanup_matched_dir();
+		if ( ! $result['success'] ) {
+			wp_send_json_error( $result );
+		}
+		wp_send_json_success( $result );
 	}
 
 	public function render_tab_content(): void {
 		$post_types = get_post_types( array( 'public' => true ), 'objects' );
 		?>
-		<div id="ik-lr-config">
-			<fieldset class="ik-panel">
+		<div class="ik-panel ik-scan-config" id="ik-lr-config">
+			<fieldset>
 				<legend><strong><?php esc_html_e( 'Post types to scan:', 'image-kit' ); ?></strong></legend>
 				<?php
 				foreach ( $post_types as $pt ) {
@@ -98,6 +180,33 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 					);
 				}
 				?>
+			</fieldset>
+
+			<fieldset style="margin-top:12px;">
+				<legend><strong><?php esc_html_e( 'Size slugs to include (optional):', 'image-kit' ); ?></strong></legend>
+				<?php
+				$registered_sizes = get_intermediate_image_sizes();
+				if ( ! in_array( 'full', $registered_sizes, true ) ) {
+					$registered_sizes[] = 'full';
+				}
+				$slug_options = array();
+				foreach ( $registered_sizes as $slug ) {
+					$slug_options[ $slug ] = $slug;
+				}
+				$slug_options['featured-image'] = __( 'Featured Image', 'image-kit' );
+				$slug_options['none']           = __( 'Unspecified', 'image-kit' );
+
+				foreach ( $slug_options as $value => $label ) {
+					printf(
+						'<label style="margin-right:16px;"><input type="checkbox" class="ik-lr-size-slug" value="%s"> %s</label> ',
+						esc_attr( $value ),
+						esc_html( $label )
+					);
+				}
+				?>
+				<p class="description" style="margin-top:6px;">
+					<?php esc_html_e( 'Leave all unchecked to include every size slug.', 'image-kit' ); ?>
+				</p>
 			</fieldset>
 
 			<div style="margin:12px 0;">
@@ -125,39 +234,72 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 			</p>
 		</div>
 
-		<div id="ik-lr-progress" class="ik-progress" style="display:none;">
-			<p>
-				<?php esc_html_e( 'Scanning posts…', 'image-kit' ); ?>
-				<span class="ik-progress-text"></span>
-			</p>
-			<div class="ik-progress-bar"><div class="ik-progress-fill"></div></div>
-		</div>
+		<div class="ik-panel ik-scan-progress" id="ik-lr-progress"></div>
+		<div class="ik-panel ik-scan-results" id="ik-lr-results"></div>
 
-		<div id="ik-lr-results" style="display:none;">
-			<h2><?php esc_html_e( 'Scan Results', 'image-kit' ); ?></h2>
-			<p id="ik-lr-summary"></p>
+		<div id="ik-lr-handoff" class="ik-panel" style="display:none;margin-top:24px;">
+				<h3><?php esc_html_e( 'Next: match against your photo library', 'image-kit' ); ?></h3>
+				<p class="description">
+					<?php esc_html_e( 'Hand the selected images off to the offline photo-match script. The commands below use absolute paths for your install — run them from a working directory on your Mac.', 'image-kit' ); ?>
+				</p>
 
-			<p id="ik-lr-export-wrap" style="display:none;">
-				<button type="button" id="ik-lr-export" class="button"><?php esc_html_e( 'Export CSV', 'image-kit' ); ?></button>
-			</p>
+				<h4><?php esc_html_e( '1. Download the selected images', 'image-kit' ); ?></h4>
+				<p class="description">
+					<?php esc_html_e( 'Click Export CSV above first — it also writes a sibling low-resolution-files.txt that the next command consumes.', 'image-kit' ); ?>
+				</p>
+				<pre id="ik-lr-rsync-down" class="ik-code-block"></pre>
 
-			<div id="ik-lr-pagination"></div>
+				<h4><?php esc_html_e( '2. Run photo-match.py locally', 'image-kit' ); ?></h4>
+				<p class="description">
+					<?php
+					printf(
+						/* translators: %s: path to photo-match.py inside the plugin */
+						esc_html__( 'The script ships with the plugin at %s. Export your source photos (e.g. from Apple Photos) into ./exported-photos/ first.', 'image-kit' ),
+						'<code>' . esc_html( 'wp-content/plugins/image-kit/tools/photo-match.py' ) . '</code>'
+					);
+					?>
+				</p>
+				<pre id="ik-lr-pymatch-cmd" class="ik-code-block"></pre>
 
-			<table class="widefat striped" id="ik-lr-table" style="display:none;">
-				<thead>
-					<tr>
-						<th class="ik-col-thumb"><?php esc_html_e( 'Thumb', 'image-kit' ); ?></th>
-						<th><?php esc_html_e( 'Source', 'image-kit' ); ?></th>
-						<th><?php esc_html_e( 'Post', 'image-kit' ); ?></th>
-						<th><?php esc_html_e( 'Image', 'image-kit' ); ?></th>
-						<th><?php esc_html_e( 'Dimensions', 'image-kit' ); ?></th>
-						<th><?php esc_html_e( 'Size Slug', 'image-kit' ); ?></th>
-					</tr>
-				</thead>
-				<tbody id="ik-lr-tbody"></tbody>
-			</table>
+				<h4><?php esc_html_e( '3. Upload the matched-photos directory', 'image-kit' ); ?></h4>
+				<pre id="ik-lr-rsync-up" class="ik-code-block"></pre>
 
-			<div id="ik-lr-pagination-bottom"></div>
+				<h4><?php esc_html_e( '4. Apply matches', 'image-kit' ); ?></h4>
+				<p>
+					<button type="button" id="ik-lr-scan-matched" class="button button-primary">
+						<?php esc_html_e( 'Scan matched-photos directory', 'image-kit' ); ?>
+					</button>
+				</p>
+				<div id="ik-lr-apply-errors" style="display:none;"></div>
+				<div id="ik-lr-apply-results" style="display:none;">
+					<p id="ik-lr-apply-summary"></p>
+					<p>
+						<label><input type="checkbox" id="ik-lr-apply-select-all" checked> <strong><?php esc_html_e( 'Select all', 'image-kit' ); ?></strong></label>
+						<button type="button" id="ik-lr-apply-btn" class="button button-primary" style="margin-left:12px;">
+							<?php esc_html_e( 'Apply Selected', 'image-kit' ); ?>
+						</button>
+						<button type="button" id="ik-lr-cleanup-btn" class="button" style="margin-left:8px;display:none;">
+							<?php esc_html_e( 'Delete matched-photos directory', 'image-kit' ); ?>
+						</button>
+					</p>
+					<div id="ik-lr-apply-progress" class="ik-progress" style="display:none;">
+						<div class="ik-progress-bar"><div class="ik-progress-fill"></div></div>
+						<span class="ik-progress-text"></span>
+					</div>
+					<table class="widefat striped" id="ik-lr-apply-table">
+						<thead>
+							<tr>
+								<th class="ik-col-check"></th>
+								<th><?php esc_html_e( 'Attachment', 'image-kit' ); ?></th>
+								<th><?php esc_html_e( 'Original', 'image-kit' ); ?></th>
+								<th><?php esc_html_e( 'Replacement', 'image-kit' ); ?></th>
+								<th><?php esc_html_e( 'Confidence', 'image-kit' ); ?></th>
+								<th><?php esc_html_e( 'Status', 'image-kit' ); ?></th>
+							</tr>
+						</thead>
+						<tbody id="ik-lr-apply-tbody"></tbody>
+					</table>
+				</div>
 		</div>
 		<?php
 	}

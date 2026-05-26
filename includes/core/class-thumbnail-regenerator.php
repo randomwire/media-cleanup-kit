@@ -94,50 +94,6 @@ class Image_Kit_Core_Thumbnail_Regenerator {
 	}
 
 	/**
-	 * Regenerate metadata for an attachment with server protections.
-	 *
-	 * Unlike replace_file_in_place(), this does not change the file —
-	 * it only regenerates metadata and thumbnails from the existing file.
-	 *
-	 * @param int  $attachment_id Attachment ID.
-	 * @param bool $reduce_sizes  Whether to reduce image sizes during regen.
-	 * @return array|\WP_Error New attachment metadata on success.
-	 */
-	public function regenerate_metadata( int $attachment_id, bool $reduce_sizes = true ) {
-		require_once ABSPATH . 'wp-admin/includes/image.php';
-
-		$this->apply_server_protections();
-
-		$file = get_attached_file( $attachment_id );
-		if ( ! $file || ! file_exists( $file ) ) {
-			$this->reset_server_protections();
-			return new \WP_Error( 'file_missing', __( 'Attachment file does not exist.', 'image-kit' ) );
-		}
-
-		$saved_sizes = null;
-		if ( apply_filters( 'image_kit_reduce_thumbnail_sizes', $reduce_sizes ) ) {
-			$saved_sizes = $this->reduce_image_sizes();
-		}
-
-		$new_meta = wp_generate_attachment_metadata( $attachment_id, $file );
-
-		if ( null !== $saved_sizes ) {
-			$this->restore_image_sizes( $saved_sizes );
-		}
-
-		if ( empty( $new_meta ) ) {
-			$this->reset_server_protections();
-			return new \WP_Error( 'metadata_failed', __( 'Failed to generate attachment metadata.', 'image-kit' ) );
-		}
-
-		wp_update_attachment_metadata( $attachment_id, $new_meta );
-
-		$this->reset_server_protections();
-
-		return $new_meta;
-	}
-
-	/**
 	 * Apply server protections for CPU/IO heavy operations.
 	 */
 	private function apply_server_protections(): void {

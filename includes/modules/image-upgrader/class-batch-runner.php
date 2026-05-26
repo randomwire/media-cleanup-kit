@@ -135,10 +135,8 @@ class Image_Kit_Image_Upgrader_Batch_Runner {
 			$run_id,
 			array(
 				'posts_scanned'   => $run->posts_scanned + count( $post_ids ),
-				'posts_updated'   => $run->posts_updated + $batch_updated,
 				'images_replaced' => $run->images_replaced + $batch_replaced,
 				'images_skipped'  => $run->images_skipped + $batch_skipped,
-				'error_count'     => $run->error_count + $batch_errors,
 			)
 		);
 
@@ -160,7 +158,6 @@ class Image_Kit_Image_Upgrader_Batch_Runner {
 			'done'     => $done,
 			'progress' => array(
 				'posts_scanned'   => (int) $updated_run->posts_scanned,
-				'posts_updated'   => (int) $updated_run->posts_updated,
 				'images_replaced' => (int) $updated_run->images_replaced,
 				'images_skipped'  => (int) $updated_run->images_skipped,
 			),
@@ -311,16 +308,6 @@ class Image_Kit_Image_Upgrader_Batch_Runner {
 				array(
 					'status'        => ( $batch_errors > 0 && 0 === $batch_updated ) ? 'failed' : 'completed',
 					'completed_at'  => current_time( 'mysql', true ),
-					'posts_updated' => $run->posts_updated + $batch_updated,
-					'error_count'   => $run->error_count + $batch_errors,
-				)
-			);
-		} else {
-			$this->run_log->update_run(
-				$run_id,
-				array(
-					'posts_updated' => $run->posts_updated + $batch_updated,
-					'error_count'   => $run->error_count + $batch_errors,
 				)
 			);
 		}
@@ -422,10 +409,8 @@ class Image_Kit_Image_Upgrader_Batch_Runner {
 			$run_id,
 			array(
 				'posts_scanned'   => $run->posts_scanned + count( $post_ids ),
-				'posts_updated'   => $run->posts_updated + $batch_updated,
 				'images_replaced' => $run->images_replaced + $batch_replaced,
 				'images_skipped'  => $run->images_skipped + $batch_skipped,
-				'error_count'     => $run->error_count + $batch_errors,
 			)
 		);
 
@@ -447,7 +432,6 @@ class Image_Kit_Image_Upgrader_Batch_Runner {
 			'done'     => $done,
 			'progress' => array(
 				'posts_scanned'   => (int) $updated_run->posts_scanned,
-				'posts_updated'   => (int) $updated_run->posts_updated,
 				'images_replaced' => (int) $updated_run->images_replaced,
 				'images_skipped'  => (int) $updated_run->images_skipped,
 			),
@@ -570,16 +554,6 @@ class Image_Kit_Image_Upgrader_Batch_Runner {
 				array(
 					'status'        => ( $batch_errors > 0 && 0 === $batch_updated ) ? 'failed' : 'completed',
 					'completed_at'  => current_time( 'mysql', true ),
-					'posts_updated' => $run->posts_updated + $batch_updated,
-					'error_count'   => $run->error_count + $batch_errors,
-				)
-			);
-		} else {
-			$this->run_log->update_run(
-				$run_id,
-				array(
-					'posts_updated' => $run->posts_updated + $batch_updated,
-					'error_count'   => $run->error_count + $batch_errors,
 				)
 			);
 		}

@@ -193,6 +193,14 @@ class Image_Kit_Image_Upgrader_Scanner {
 				$candidate_ids = $this->lookup_attachments_by_filename( $filename );
 				if ( ! empty( $candidate_ids ) ) {
 					$attachment_id = $candidate_ids[0];
+				} else {
+					foreach ( $this->edited_filename_alternatives( $filename ) as $alt ) {
+						$candidate_ids = $this->lookup_attachments_by_filename( $alt );
+						if ( ! empty( $candidate_ids ) ) {
+							$attachment_id = $candidate_ids[0];
+							break;
+						}
+					}
 				}
 			}
 
@@ -273,86 +281,6 @@ class Image_Kit_Image_Upgrader_Scanner {
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Run diagnostics: report upload base URL, aliases, regex pattern,
-	 * and sample image URLs found in post content.
-	 *
-	 * @param int $sample_size Number of posts to sample.
-	 * @return array Diagnostic data.
-	 */
-	public function run_diagnostics( $sample_size = 50 ) {
-		if ( ! $this->alias_map_built ) {
-			$this->build_url_alias_map();
-		}
-
-		$bases = array( preg_quote( $this->uploads_baseurl, '#' ) );
-		foreach ( $this->url_aliases as $alias ) {
-			$bases[] = preg_quote( $alias, '#' );
-		}
-
-		$protocol_agnostic_bases = array();
-		foreach ( $bases as $base ) {
-			$protocol_agnostic_bases[] = preg_replace(
-				'#^https?\\\\://#i',
-				'(?:https?:)?//',
-				$base
-			);
-		}
-
-		$base_pattern = '(?:' . implode( '|', $protocol_agnostic_bases ) . ')';
-		$full_pattern = '#(' . $base_pattern . '/[^\s"\'<>]+?)-(\d+x\d+|scaled)\.(jpe?g|png|gif|webp|avif)#i';
-
-		$sample_posts = get_posts( array(
-			'post_type'      => array( 'post', 'page' ),
-			'post_status'    => 'publish',
-			'posts_per_page' => $sample_size,
-			'orderby'        => 'rand',
-			'no_found_rows'  => true,
-		) );
-
-		$sample_urls     = array();
-		$sample_matches  = array();
-		$posts_with_imgs = 0;
-		$img_url_pattern = '#<img\s[^>]*src=["\']([^"\']+)["\'][^>]*>#i';
-
-		foreach ( $sample_posts as $post ) {
-			if ( empty( $post->post_content ) ) {
-				continue;
-			}
-
-			if ( preg_match_all( $img_url_pattern, $post->post_content, $img_matches ) ) {
-				$posts_with_imgs++;
-				foreach ( $img_matches[1] as $url ) {
-					if ( count( $sample_urls ) < 20 ) {
-						$sample_urls[] = $url;
-					}
-				}
-			}
-
-			$resized = $this->find_resized_urls( $post->post_content );
-			if ( ! empty( $resized ) ) {
-				foreach ( $resized as $resized_url => $info ) {
-					if ( count( $sample_matches ) < 10 ) {
-						$sample_matches[] = $resized_url;
-					}
-				}
-			}
-		}
-
-		return array(
-			'uploads_baseurl'    => $this->uploads_baseurl,
-			'uploads_basedir'    => $this->uploads_basedir,
-			'url_aliases'        => $this->url_aliases,
-			'regex_pattern'      => $full_pattern,
-			'sample_img_urls'    => $sample_urls,
-			'sample_regex_hits'  => $sample_matches,
-			'posts_sampled'      => count( $sample_posts ),
-			'posts_with_images'  => $posts_with_imgs,
-			'site_url'           => site_url(),
-			'home_url'           => home_url(),
-		);
 	}
 
 	// ──────────────────────────────────────────────────────────────────
@@ -569,6 +497,14 @@ class Image_Kit_Image_Upgrader_Scanner {
 			return $this->attachment_cache[ $cache_key ];
 		}
 
+		// User-supplied alias (Upload-replacement flow): the user explicitly
+		// mapped this URL to an attachment when the automatic lookup failed.
+		$aliased = $this->lookup_alias( $url );
+		if ( $aliased ) {
+			$this->attachment_cache[ $cache_key ] = $aliased;
+			return $aliased;
+		}
+
 		$attachment_id = attachment_url_to_postid( $url );
 
 		if ( ! $attachment_id ) {
@@ -603,9 +539,91 @@ class Image_Kit_Image_Upgrader_Scanner {
 			);
 		}
 
+		// Edited-image fallback. WordPress's image editor saves edited copies
+		// as {name}-e{timestamp}.{ext} (with an optional -WxH size suffix).
+		// The _wp_attached_file postmeta still references the original file,
+		// so direct lookups above miss it. Strip the suffix(es) and retry.
+		if ( ! $attachment_id ) {
+			$alternatives = $this->edited_filename_alternatives( wp_basename( $url ) );
+			foreach ( $alternatives as $alt_filename ) {
+				$candidates = $this->lookup_attachments_by_filename( $alt_filename );
+				if ( ! empty( $candidates ) ) {
+					$attachment_id = $candidates[0];
+					break;
+				}
+			}
+		}
+
 		$result                               = $attachment_id ? $attachment_id : false;
 		$this->attachment_cache[ $cache_key ] = $result;
 		return $result;
+	}
+
+	/**
+	 * Return candidate filenames to look up when the URL's basename doesn't
+	 * match `_wp_attached_file` directly. Covers three WordPress-isms:
+	 *
+	 *   1. Edited-image suffix `-e<timestamp>` (saved by the image editor).
+	 *   2. Thumbnail size suffix `-WxH`.
+	 *   3. Big-image auto-scaling: WP renames the uploaded file to
+	 *      `<name>-scaled.<ext>` and points `_wp_attached_file` at the
+	 *      scaled copy, keeping the pre-scale filename in the metadata's
+	 *      `original_image` field. URLs in post content often reference
+	 *      the pre-scale name, so we also try ADDING `-scaled` here.
+	 *
+	 * Examples:
+	 *   image-129-e1462792051861.jpeg
+	 *     → [image-129.jpeg, image-129-e1462792051861-scaled.jpeg,
+	 *        image-129-scaled.jpeg]
+	 *   image-129-300x200.jpeg
+	 *     → [image-129.jpeg, image-129-scaled.jpeg]
+	 *
+	 * @param string $filename Basename to expand.
+	 * @return string[] Distinct alternative basenames (excluding the original).
+	 */
+	private function edited_filename_alternatives( $filename ) {
+		$candidates = array();
+
+		// 1. Strip -e<timestamp> (8+ digits).
+		$stripped_e = preg_replace( '/-e\d{8,}(?=(?:-\d+x\d+)?\.[a-z0-9]+$)/i', '', $filename );
+		if ( $stripped_e !== $filename ) {
+			$candidates[] = $stripped_e;
+		}
+
+		// 2. Strip -WxH size suffix.
+		$stripped_size = preg_replace( '/-\d+x\d+(?=\.[a-z0-9]+$)/i', '', $filename );
+		if ( $stripped_size !== $filename ) {
+			$candidates[] = $stripped_size;
+		}
+
+		// 1 + 2 combined.
+		if ( $stripped_e !== $filename ) {
+			$both = preg_replace( '/-\d+x\d+(?=\.[a-z0-9]+$)/i', '', $stripped_e );
+			if ( $both !== $stripped_e ) {
+				$candidates[] = $both;
+			}
+		}
+
+		// 3. For every candidate so far (and the original), also try adding
+		//    -scaled before the extension. Covers big-image auto-scale where
+		//    _wp_attached_file holds the scaled name but the URL doesn't.
+		$with_scaled = array();
+		$base_pool   = array_merge( array( $filename ), $candidates );
+		foreach ( $base_pool as $cand ) {
+			if ( preg_match( '/-scaled\.[a-z0-9]+$/i', $cand ) ) {
+				continue;
+			}
+			$scaled = preg_replace( '/(\.[a-z0-9]+)$/i', '-scaled$1', $cand );
+			if ( $scaled && $scaled !== $cand ) {
+				$with_scaled[] = $scaled;
+			}
+		}
+
+		$candidates = array_merge( $candidates, $with_scaled );
+
+		return array_values( array_unique( array_filter( $candidates, function ( $f ) use ( $filename ) {
+			return $f && $f !== $filename;
+		} ) ) );
 	}
 
 	/**
@@ -1162,6 +1180,69 @@ class Image_Kit_Image_Upgrader_Scanner {
 
 	private function normalize_protocol( $url ) {
 		return preg_replace( '#^https?://#i', '//', $url );
+	}
+
+	// ──────────────────────────────────────────────────────────────────
+	// Public: URL ↔ attachment alias map (Upload-replacement flow)
+	//
+	// When the automatic lookup chain can't resolve a URL but the user
+	// supplies the correct attachment manually, we persist that mapping
+	// in a WP option so future scans / lookups resolve transparently.
+	// ──────────────────────────────────────────────────────────────────
+
+	const URL_ALIAS_OPTION = 'image_kit_url_aliases';
+
+	/**
+	 * Persist a URL → attachment ID mapping. URL is protocol-normalised
+	 * so http/https variants don't double-store.
+	 *
+	 * @param string $url           URL as it appears in post content.
+	 * @param int    $attachment_id The attachment the user mapped it to.
+	 * @return bool
+	 */
+	public function record_url_alias( $url, $attachment_id ) {
+		$attachment_id = (int) $attachment_id;
+		if ( ! $attachment_id || ! $url ) {
+			return false;
+		}
+		$key     = $this->normalize_protocol( $url );
+		$aliases = get_option( self::URL_ALIAS_OPTION, array() );
+		if ( ! is_array( $aliases ) ) {
+			$aliases = array();
+		}
+		$aliases[ $key ] = $attachment_id;
+		update_option( self::URL_ALIAS_OPTION, $aliases, true );
+
+		// Invalidate the in-memory cache so a re-audit in the same request
+		// picks up the new mapping.
+		unset( $this->attachment_cache[ $key ] );
+		return true;
+	}
+
+	/**
+	 * Look up a previously-recorded alias for a URL.
+	 *
+	 * @param string $url URL as it appears in post content.
+	 * @return int Attachment ID, or 0 if no alias / attachment no longer exists.
+	 */
+	public function lookup_alias( $url ) {
+		if ( ! $url ) {
+			return 0;
+		}
+		$aliases = get_option( self::URL_ALIAS_OPTION, array() );
+		if ( ! is_array( $aliases ) ) {
+			return 0;
+		}
+		$key = $this->normalize_protocol( $url );
+		if ( empty( $aliases[ $key ] ) ) {
+			return 0;
+		}
+		$attachment_id = (int) $aliases[ $key ];
+		// Guard against stale aliases pointing at deleted attachments.
+		if ( ! get_post( $attachment_id ) ) {
+			return 0;
+		}
+		return $attachment_id;
 	}
 
 	// ──────────────────────────────────────────────────────────────────

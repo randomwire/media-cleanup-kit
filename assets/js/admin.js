@@ -44,14 +44,12 @@
 
 	function escHtml(str) {
 		const div = document.createElement('div');
-		div.textContent = str || '';
+		div.textContent = str == null ? '' : String(str);
 		return div.innerHTML;
 	}
 
 	function escAttr(str) {
-		const div = document.createElement('div');
-		div.textContent = str || '';
-		return div.innerHTML.replace(/"/g, '&quot;');
+		return escHtml(str).replace(/"/g, '&quot;');
 	}
 
 	// ── Logging ──

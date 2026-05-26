@@ -71,61 +71,6 @@ class Image_Kit_Core_Block_Parser {
 		return apply_filters( 'image_kit_parsed_images', $results, $content );
 	}
 
-	/**
-	 * Extract image URLs from wp:image blocks only (simpler, no gallery/cover/media-text).
-	 *
-	 * Used by modules that only need wp:image blocks (e.g., low-resolution scanner).
-	 *
-	 * @param string $content Post content.
-	 * @return array Array of [ 'url', 'json_attrs', 'inner_html', 'attachment_id' ].
-	 */
-	public function extract_image_blocks( string $content ): array {
-		$results = array();
-
-		if ( ! preg_match_all( self::IMAGE_BLOCK_PATTERN, $content, $matches, PREG_SET_ORDER ) ) {
-			return $results;
-		}
-
-		foreach ( $matches as $match ) {
-			$json_str   = $match[1] ?? '';
-			$inner_html = $match[2];
-			$attrs      = $json_str ? json_decode( $json_str, true ) : array();
-
-			if ( ! is_array( $attrs ) ) {
-				$attrs = array();
-			}
-
-			// Get URL from <img> tag in inner HTML.
-			$url = '';
-			if ( preg_match( self::IMG_SRC_PATTERN, $inner_html, $img_match ) ) {
-				$url = $img_match[1];
-			}
-
-			$results[] = array(
-				'url'           => $url,
-				'json_attrs'    => $attrs,
-				'inner_html'    => $inner_html,
-				'attachment_id' => isset( $attrs['id'] ) ? (int) $attrs['id'] : null,
-			);
-		}
-
-		return $results;
-	}
-
-	/**
-	 * Extract all <img> src values from an HTML fragment.
-	 *
-	 * @param string $html HTML content.
-	 * @return string[] Array of URLs.
-	 */
-	public function extract_img_srcs( string $html ): array {
-		$urls = array();
-		if ( preg_match_all( self::IMG_SRC_PATTERN, $html, $matches ) ) {
-			$urls = $matches[1];
-		}
-		return $urls;
-	}
-
 	// ── Private parsing methods ──
 
 	private function parse_gallery_blocks( string $content, array &$results, array &$seen, array &$consumed ): void {

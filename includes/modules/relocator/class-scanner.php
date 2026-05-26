@@ -2,9 +2,7 @@
 /**
  * Image Kit — Relocator scanner.
  *
- * Two features:
- * 1. Relocate: Move images from upload subdirectories to uploads root.
- * 2. Import Orphans: Find orphan files not in the media library and import them.
+ * Move images from upload subdirectories to the uploads root.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -20,8 +18,6 @@ class Image_Kit_Relocator_Scanner {
 	 */
 	private static $excluded_dirs = array( 'ShortpixelBackups' );
 
-	private static $image_extensions = array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'tif' );
-
 	public function __construct() {
 		$this->upload_dir = wp_upload_dir();
 	}
@@ -29,14 +25,13 @@ class Image_Kit_Relocator_Scanner {
 	// ── Relocate ──
 
 	/**
-	 * Scan for attachments in subdirectories of the uploads root.
+	 * Count attachments that match the relocate criteria (in subdirectories,
+	 * not in excluded dirs). Used for showing total on the first batch.
 	 */
-	public function scan_attachments(): array {
+	public function count_relocatable_attachments(): int {
 		global $wpdb;
 
-		$basedir = $this->upload_dir['basedir'];
-
-		$sql = "SELECT post_id, meta_value FROM {$wpdb->postmeta}
+		$sql = "SELECT COUNT(*) FROM {$wpdb->postmeta}
 				WHERE meta_key = '_wp_attached_file' AND meta_value LIKE '%/%'";
 
 		$excluded = apply_filters( 'image_kit_excluded_directories', self::$excluded_dirs );
@@ -44,12 +39,41 @@ class Image_Kit_Relocator_Scanner {
 			$sql .= $wpdb->prepare( " AND meta_value NOT LIKE %s", $wpdb->esc_like( $dir ) . '/%' );
 		}
 
-		$rows = $wpdb->get_results( $sql );
-		if ( ! $rows ) {
-			return array();
+		return (int) $wpdb->get_var( $sql );
+	}
+
+	/**
+	 * Scan a batch of attachments in subdirectories of the uploads root.
+	 *
+	 * @param int $offset     Row offset.
+	 * @param int $batch_size Max rows to process.
+	 * @return array { items, offset, done }
+	 */
+	public function scan_attachments_batched( int $offset, int $batch_size ): array {
+		global $wpdb;
+
+		$basedir = $this->upload_dir['basedir'];
+
+		$sql = "SELECT meta_id, post_id, meta_value FROM {$wpdb->postmeta}
+				WHERE meta_key = '_wp_attached_file' AND meta_value LIKE '%/%'";
+
+		$excluded = apply_filters( 'image_kit_excluded_directories', self::$excluded_dirs );
+		foreach ( $excluded as $dir ) {
+			$sql .= $wpdb->prepare( " AND meta_value NOT LIKE %s", $wpdb->esc_like( $dir ) . '/%' );
 		}
 
+		$sql .= $wpdb->prepare( ' ORDER BY meta_id ASC LIMIT %d OFFSET %d', $batch_size, $offset );
+
+		$rows = $wpdb->get_results( $sql );
 		$items = array();
+
+		if ( ! $rows ) {
+			return array(
+				'items'  => array(),
+				'offset' => $offset,
+				'done'   => true,
+			);
+		}
 
 		foreach ( $rows as $row ) {
 			$attachment_id = (int) $row->post_id;
@@ -110,7 +134,11 @@ class Image_Kit_Relocator_Scanner {
 			);
 		}
 
-		return $items;
+		return array(
+			'items'  => $items,
+			'offset' => $offset + count( $rows ),
+			'done'   => count( $rows ) < $batch_size,
+		);
 	}
 
 	/**
@@ -317,213 +345,5 @@ class Image_Kit_Relocator_Scanner {
 		}
 
 		return $updated;
-	}
-
-	// ── Import Orphans ──
-
-	/**
-	 * Scan uploads for image files not in the media library.
-	 */
-	public function scan_orphan_files(): array {
-		global $wpdb;
-
-		$basedir = $this->upload_dir['basedir'];
-
-		// Build known-files lookup.
-		$known_files = array();
-
-		$attached_files = $wpdb->get_col(
-			"SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file'"
-		);
-		foreach ( $attached_files as $rel_path ) {
-			$dir  = dirname( $rel_path );
-			$file = wp_basename( $rel_path );
-			if ( '.' === $dir ) {
-				$dir = '';
-			}
-			$known_files[ $dir ][ $file ] = true;
-		}
-
-		$meta_rows = $wpdb->get_results(
-			"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attachment_metadata'"
-		);
-		foreach ( $meta_rows as $row ) {
-			$meta = maybe_unserialize( $row->meta_value );
-			if ( ! is_array( $meta ) ) {
-				continue;
-			}
-			$meta_dir = '';
-			if ( ! empty( $meta['file'] ) ) {
-				$d = dirname( $meta['file'] );
-				if ( '.' !== $d ) {
-					$meta_dir = $d;
-				}
-			}
-			if ( ! empty( $meta['sizes'] ) && is_array( $meta['sizes'] ) ) {
-				foreach ( $meta['sizes'] as $size_data ) {
-					if ( ! empty( $size_data['file'] ) ) {
-						$known_files[ $meta_dir ][ $size_data['file'] ] = true;
-					}
-				}
-			}
-			if ( ! empty( $meta['original_image'] ) ) {
-				$known_files[ $meta_dir ][ $meta['original_image'] ] = true;
-			}
-		}
-
-		// Walk uploads.
-		$orphans  = array();
-		$excluded = apply_filters( 'image_kit_excluded_directories', self::$excluded_dirs );
-
-		try {
-			$iterator = new \RecursiveIteratorIterator(
-				new \RecursiveDirectoryIterator( $basedir, \RecursiveDirectoryIterator::SKIP_DOTS ),
-				\RecursiveIteratorIterator::SELF_FIRST
-			);
-		} catch ( \Exception $e ) {
-			return array();
-		}
-
-		foreach ( $iterator as $file_info ) {
-			if ( ! $file_info->isFile() ) {
-				continue;
-			}
-
-			$absolute_path = $file_info->getPathname();
-			$relative_path = substr( $absolute_path, strlen( $basedir ) + 1 );
-
-			$skip = false;
-			foreach ( $excluded as $exc ) {
-				if ( str_starts_with( $relative_path, $exc . '/' ) || $relative_path === $exc ) {
-					$skip = true;
-					break;
-				}
-			}
-			if ( $skip ) {
-				continue;
-			}
-
-			$ext = strtolower( pathinfo( $relative_path, PATHINFO_EXTENSION ) );
-			if ( ! in_array( $ext, self::$image_extensions, true ) ) {
-				continue;
-			}
-
-			$dir      = dirname( $relative_path );
-			$basename = wp_basename( $relative_path );
-			if ( '.' === $dir ) {
-				$dir = '';
-			}
-
-			if ( isset( $known_files[ $dir ][ $basename ] ) ) {
-				continue;
-			}
-
-			$orphans[ $relative_path ] = array(
-				'relative_path' => $relative_path,
-				'filename'      => $basename,
-				'directory'     => $dir,
-				'file_size'     => $file_info->getSize(),
-			);
-		}
-
-		return $this->group_orphan_variants( $orphans );
-	}
-
-	private function group_orphan_variants( array $orphans ): array {
-		$by_dir = array();
-		foreach ( $orphans as $rel_path => $info ) {
-			$by_dir[ $info['directory'] ][ $info['filename'] ] = $rel_path;
-		}
-
-		$variants_of = array();
-		$is_variant  = array();
-
-		foreach ( $orphans as $rel_path => $info ) {
-			$stem = pathinfo( $info['filename'], PATHINFO_FILENAME );
-			$ext  = pathinfo( $info['filename'], PATHINFO_EXTENSION );
-			$original_stem = null;
-
-			if ( preg_match( '/^(.+)-\d+x\d+$/', $stem, $m ) ) {
-				$original_stem = $m[1];
-			} elseif ( preg_match( '/^(.+)-(scaled|rotated)$/', $stem, $m ) ) {
-				$original_stem = $m[1];
-			} elseif ( preg_match( '/^(.+)-e\d{10,}$/', $stem, $m ) ) {
-				$original_stem = $m[1];
-			}
-
-			if ( null === $original_stem ) {
-				continue;
-			}
-
-			$original_basename = $original_stem . '.' . $ext;
-			$dir               = $info['directory'];
-
-			if ( isset( $by_dir[ $dir ][ $original_basename ] ) ) {
-				$original_rel = $by_dir[ $dir ][ $original_basename ];
-				$variants_of[ $original_rel ][] = $info['filename'];
-				$is_variant[ $rel_path ] = true;
-			}
-		}
-
-		$results = array();
-		foreach ( $orphans as $rel_path => $info ) {
-			if ( isset( $is_variant[ $rel_path ] ) ) {
-				continue;
-			}
-			$info['variant_count'] = isset( $variants_of[ $rel_path ] ) ? count( $variants_of[ $rel_path ] ) : 0;
-			$info['variant_files'] = isset( $variants_of[ $rel_path ] ) ? $variants_of[ $rel_path ] : array();
-			$results[] = $info;
-		}
-
-		return $results;
-	}
-
-	/**
-	 * Import an orphan file into the media library.
-	 */
-	public function import_orphan( string $relative_path ): array {
-		require_once ABSPATH . 'wp-admin/includes/image.php';
-
-		$basedir       = $this->upload_dir['basedir'];
-		$absolute_path = $basedir . '/' . $relative_path;
-
-		if ( ! Image_Kit_Core_File_Operations::validate_path_within( $absolute_path, $basedir ) ) {
-			return array( 'success' => false, 'message' => __( 'Invalid file path.', 'image-kit' ) );
-		}
-
-		if ( ! file_exists( $absolute_path ) || ! is_readable( $absolute_path ) ) {
-			return array( 'success' => false, 'message' => __( 'File not found or not readable.', 'image-kit' ) );
-		}
-
-		$filetype = wp_check_filetype( wp_basename( $relative_path ) );
-		if ( empty( $filetype['type'] ) || 0 !== strpos( $filetype['type'], 'image/' ) ) {
-			return array( 'success' => false, 'message' => __( 'Not a recognised image type.', 'image-kit' ) );
-		}
-
-		$filename      = wp_basename( $relative_path );
-		$title         = pathinfo( $filename, PATHINFO_FILENAME );
-		$attachment_id = wp_insert_attachment( array(
-			'post_title'     => sanitize_text_field( $title ),
-			'post_content'   => '',
-			'post_status'    => 'inherit',
-			'post_mime_type' => $filetype['type'],
-		), $absolute_path );
-
-		if ( is_wp_error( $attachment_id ) || ! $attachment_id ) {
-			return array( 'success' => false, 'message' => __( 'Failed to create attachment post.', 'image-kit' ) );
-		}
-
-		if ( function_exists( 'set_time_limit' ) ) {
-			set_time_limit( 120 );
-		}
-
-		$metadata = wp_generate_attachment_metadata( $attachment_id, $absolute_path );
-		wp_update_attachment_metadata( $attachment_id, $metadata );
-
-		return array(
-			'success'       => true,
-			'message'       => __( 'Imported successfully.', 'image-kit' ),
-			'attachment_id' => $attachment_id,
-		);
 	}
 }

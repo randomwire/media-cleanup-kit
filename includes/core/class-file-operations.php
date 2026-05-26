@@ -11,32 +11,6 @@ defined( 'ABSPATH' ) || exit;
 class Image_Kit_Core_File_Operations {
 
 	/**
-	 * Move a file to a new location, with fallback to copy+delete.
-	 *
-	 * @param string $from Source path.
-	 * @param string $to   Destination path.
-	 * @return bool True on success.
-	 */
-	public static function move_file( string $from, string $to ): bool {
-		if ( ! file_exists( $from ) ) {
-			return false;
-		}
-
-		// Try rename first (fast, same-filesystem).
-		if ( @rename( $from, $to ) ) {
-			return true;
-		}
-
-		// Fallback: copy + delete.
-		if ( copy( $from, $to ) ) {
-			wp_delete_file( $from );
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
 	 * Roll back a set of moves.
 	 *
 	 * @param array $moved_map Array of [ 'from' => original, 'to' => new location ].
@@ -76,44 +50,6 @@ class Image_Kit_Core_File_Operations {
 		}
 
 		return $stem . '-' . $i . $ext;
-	}
-
-	/**
-	 * Back up a file to the backup directory.
-	 *
-	 * @param string $file_path  Absolute path to the file to back up.
-	 * @param string $backup_dir Absolute path to the backup directory (created if needed).
-	 * @return string|false Backup file path on success, false on failure.
-	 */
-	public static function backup_file( string $file_path, string $backup_dir = '' ): string {
-		if ( ! file_exists( $file_path ) ) {
-			return false;
-		}
-
-		if ( empty( $backup_dir ) ) {
-			$upload_dir = wp_upload_dir();
-			$backup_dir = $upload_dir['basedir'] . '/backup';
-		}
-
-		if ( ! wp_mkdir_p( $backup_dir ) ) {
-			return false;
-		}
-
-		$filename    = wp_basename( $file_path );
-		$destination = $backup_dir . '/' . $filename;
-
-		// Append timestamp on collision.
-		if ( file_exists( $destination ) ) {
-			$info        = pathinfo( $filename );
-			$ext         = isset( $info['extension'] ) ? '.' . $info['extension'] : '';
-			$destination = $backup_dir . '/' . $info['filename'] . '-' . time() . $ext;
-		}
-
-		if ( copy( $file_path, $destination ) ) {
-			return $destination;
-		}
-
-		return false;
 	}
 
 	/**

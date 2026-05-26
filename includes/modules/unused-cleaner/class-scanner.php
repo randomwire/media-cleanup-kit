@@ -15,52 +15,6 @@ class Image_Kit_Unused_Cleaner_Scanner {
 	const SQL_BATCH_SIZE   = 50;
 	const TRANSIENT_EXPIRY = 3600;
 
-	/**
-	 * Validate that the given directory path is safe and contains images.
-	 *
-	 * @param string $path Directory path.
-	 * @return array|\WP_Error Array with 'path' and 'count' on success.
-	 */
-	public function validate_directory( string $path ) {
-		$path = rtrim( trim( $path ), '/' );
-
-		if ( empty( $path ) ) {
-			return new \WP_Error( 'empty_path', __( 'Please enter a directory path.', 'image-kit' ) );
-		}
-
-		$real_path = realpath( $path );
-		if ( false === $real_path ) {
-			return new \WP_Error( 'not_found', __( 'Directory does not exist.', 'image-kit' ) );
-		}
-
-		if ( ! is_dir( $real_path ) ) {
-			return new \WP_Error( 'not_directory', __( 'The path is not a directory.', 'image-kit' ) );
-		}
-
-		if ( ! is_readable( $real_path ) ) {
-			return new \WP_Error( 'not_readable', __( 'The directory is not readable.', 'image-kit' ) );
-		}
-
-		$abspath     = realpath( ABSPATH );
-		$content_dir = realpath( WP_CONTENT_DIR );
-		$is_under    = ( 0 === strpos( $real_path, $abspath ) ) || ( 0 === strpos( $real_path, $content_dir ) );
-
-		if ( ! $is_under ) {
-			return new \WP_Error( 'outside_wp', __( 'Directory must be within the WordPress installation.', 'image-kit' ) );
-		}
-
-		$files = $this->build_file_list( $real_path );
-
-		if ( empty( $files ) ) {
-			return new \WP_Error( 'no_images', __( 'No image files found in the directory.', 'image-kit' ) );
-		}
-
-		return array(
-			'path'  => $real_path,
-			'count' => count( $files ),
-		);
-	}
-
 	public function get_all_files( string $directory ): array {
 		return $this->build_file_list( $directory );
 	}

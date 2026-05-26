@@ -1,143 +1,122 @@
 /**
- * Image Kit — Broken Images module JS.
+ * Image Kit — Find Broken Images module.
  *
- * Handles scanning, results display, pagination, and CSV export.
+ * Thin wrapper around window.imageKitScanUI.
+ * Read-only for now (no apply phase yet).
  */
 (function () {
 	'use strict';
 
-	const { post, escHtml, escAttr, updateProgress, exportCSV, formatNumber } = imageKitUtils;
-	const { action, pageSize } = imageKitBrokenImages;
+	const { escHtml: esc, escAttr } = window.imageKitUtils;
+	const config = window.imageKitBrokenImages || {};
 
-	let allBroken = [];
-	let currentPage = 1;
+	const startBtn   = document.getElementById('ik-bi-scan');
+	const configEl   = document.getElementById('ik-bi-config');
+	const progressEl = document.getElementById('ik-bi-progress');
+	const resultsEl  = document.getElementById('ik-bi-results');
+	if (!startBtn || !window.imageKitScanUI) return;
 
-	const scanBtn     = document.getElementById('ik-bi-scan');
-	const progressDiv = document.getElementById('ik-bi-progress');
-	const resultsDiv  = document.getElementById('ik-bi-results');
-	const summaryEl   = document.getElementById('ik-bi-summary');
-	const exportWrap  = document.getElementById('ik-bi-export-wrap');
-	const exportBtn   = document.getElementById('ik-bi-export');
-	const table       = document.getElementById('ik-bi-table');
-	const tbody       = document.getElementById('ik-bi-tbody');
+	window.imageKitScanUI.init({
+		containers: { config: configEl, progress: progressEl, results: resultsEl },
+		startButton: startBtn,
+		progressTitle: 'Scanning posts…',
 
-	if (!scanBtn) return;
+		scan: {
+			action: config.action,
+			batchSize: config.batchSize || 50,
+		},
 
-	const postTotal = parseInt(scanBtn.dataset.total, 10) || 0;
+		counters: [
+			{ key: 'posts_scanned', label: 'Posts checked' },
+		],
 
-	scanBtn.addEventListener('click', function () {
-		scanBtn.disabled = true;
-		progressDiv.style.display = '';
-		resultsDiv.style.display = 'none';
-		allBroken = [];
-		currentPage = 1;
-		runScan(0);
-	});
+		columns: [
+			{
+				key: 'post_title', label: 'Post', sortable: true,
+				render: function (b) {
+					return '<a href="' + escAttr(b.edit_link || '#') + '" target="_blank">' + esc(b.post_title) + '</a>' +
+						' <small>(ID: ' + b.post_id + ')</small>';
+				},
+			},
+			{
+				key: 'relative_path', label: 'Broken image', sortable: true,
+				render: function (b) { return '<code class="ik-path">' + esc(b.relative_path) + '</code>'; },
+			},
+			{
+				key: 'block_type', label: 'Block type', sortable: true,
+				render: function (b) { return esc(b.block_type); },
+			},
+		],
 
-	function runScan(postOffset) {
-		post(action, { post_offset: postOffset })
-			.then(function (resp) {
-				if (!resp.success) {
-					alert('Scan error: ' + (resp.data || 'Unknown error'));
-					scanBtn.disabled = false;
-					return;
-				}
+		rowKey: function (b) { return String(b.id); },
+		rowStatus: function (b) {
+			if (b._removed) return 'applied';
+			if (b._error) return 'error';
+			return 'pending';
+		},
 
-				const d = resp.data;
-				allBroken = allBroken.concat(d.broken);
+		filters: [
+			{ key: 'all',     label: 'All',     predicate: function () { return true; } },
+			{ key: 'pending', label: 'Pending', predicate: function (b) { return !b._removed && !b._error; } },
+			{ key: 'applied', label: 'Removed', predicate: function (b) { return !!b._removed; } },
+			{ key: 'error',   label: 'Errors',  predicate: function (b) { return !!b._error; } },
+		],
 
-				const processed = d.posts_processed;
-				const text = formatNumber(processed) + ' / ' + formatNumber(postTotal) +
-					' posts checked (' + allBroken.length + ' broken image' +
-					(allBroken.length !== 1 ? 's' : '') + ' found)';
-				updateProgress(progressDiv, processed, postTotal, text);
+		searchableFields: ['post_title', 'relative_path', 'block_type'],
 
-				if (!d.done) {
-					runScan(processed);
+		rowDetail: function (b) {
+			let html = '<dl class="ik-bi-detail">';
+			html += '<dt>Full URL</dt><dd><code>' + esc(b.image_url) + '</code></dd>';
+			html += '<dt>Relative path</dt><dd><code>' + esc(b.relative_path) + '</code></dd>';
+			html += '<dt>Block type</dt><dd>' + esc(b.block_type) + '</dd>';
+			html += '<dt>Post</dt><dd><a href="' + escAttr(b.edit_link) + '" target="_blank">' + esc(b.post_title) + '</a></dd>';
+			if (b._backup_file) {
+				html += '<dt>Backup</dt><dd><code>' + esc(b._backup_file) + '</code></dd>';
+			}
+			if (b._error) {
+				html += '<dt>Error</dt><dd>' + esc(b._error) + '</dd>';
+			}
+			html += '</dl>';
+			return html;
+		},
+
+		apply: {
+			action: config.applyRemoveAction,
+			batchSize: 1,
+			canApply: function (b) { return !b._removed; },
+			getParams: function (b) {
+				return {
+					post_id:    b.post_id,
+					image_url:  b.image_url,
+					block_type: b.block_type,
+				};
+			},
+			updateItem: function (b, result) {
+				if (result.success) {
+					b._removed = true;
+					b._backup_file = result.backup_file || '';
 				} else {
-					progressDiv.style.display = 'none';
-					showResults();
+					b._error = result.message || 'Failed';
 				}
-			})
-			.catch(function (err) {
-				alert('Scan failed: ' + err.message);
-				scanBtn.disabled = false;
-			});
-	}
+			},
+			confirmMessage: function (count) {
+				return 'Remove ' + count + ' broken image reference(s) from your posts?\n\n' +
+					'Original post content will be backed up under ' +
+					'wp-content/uploads/image-kit-backup/posts/ before any change. ' +
+					'This cannot be undone from within the plugin.';
+			},
+		},
+		applyButtonLabel: 'Remove Selected',
+		perRowApplyLabel: 'Remove',
 
-	function showResults() {
-		resultsDiv.style.display = '';
-		scanBtn.disabled = false;
+		csvExport: {
+			filename: function () { return 'broken-images.csv'; },
+			columns: ['Post ID', 'Post Title', 'Edit Link', 'Broken Image Path', 'Full URL', 'Block Type'],
+			row: function (b) {
+				return [b.post_id, b.post_title, b.edit_link, b.relative_path, b.image_url, b.block_type];
+			},
+		},
 
-		if (allBroken.length === 0) {
-			summaryEl.textContent = 'No broken images found. All internal image references point to existing files.';
-			return;
-		}
-
-		summaryEl.textContent = 'Found ' + allBroken.length + ' broken image reference' +
-			(allBroken.length !== 1 ? 's' : '') + ' across your posts.';
-		table.style.display = '';
-		exportWrap.style.display = '';
-		currentPage = 1;
-		renderPage();
-	}
-
-	function renderPage() {
-		const start = (currentPage - 1) * pageSize;
-		const end = Math.min(start + pageSize, allBroken.length);
-		let html = '';
-
-		for (let i = start; i < end; i++) {
-			const b = allBroken[i];
-			html += '<tr>' +
-				'<td><a href="' + escAttr(b.edit_link) + '" target="_blank">' +
-				escHtml(b.post_title) + '</a> <small>(ID: ' + b.post_id + ')</small></td>' +
-				'<td><code>' + escHtml(b.relative_path) + '</code></td>' +
-				'<td>' + escHtml(b.block_type) + '</td>' +
-				'</tr>';
-		}
-
-		tbody.innerHTML = html;
-		renderPagination();
-	}
-
-	function renderPagination() {
-		const totalPages = Math.ceil(allBroken.length / pageSize);
-		const paginationTop = document.getElementById('ik-bi-pagination');
-		const paginationBottom = document.getElementById('ik-bi-pagination-bottom');
-
-		if (totalPages <= 1) {
-			paginationTop.innerHTML = '';
-			paginationBottom.innerHTML = '';
-			return;
-		}
-
-		let html = 'Page: ';
-		for (let p = 1; p <= totalPages; p++) {
-			const cls = 'button ik-page-btn' + (p === currentPage ? ' current' : '');
-			html += '<button type="button" class="' + cls + '" data-page="' + p + '">' + p + '</button> ';
-		}
-
-		paginationTop.innerHTML = html;
-		paginationBottom.innerHTML = html;
-
-		document.querySelectorAll('.ik-page-btn').forEach(function (btn) {
-			btn.addEventListener('click', function () {
-				currentPage = parseInt(this.dataset.page, 10);
-				renderPage();
-			});
-		});
-	}
-
-	if (exportBtn) {
-		exportBtn.addEventListener('click', function () {
-			exportCSV(
-				'broken-images.csv',
-				['Post ID', 'Post Title', 'Edit Link', 'Broken Image Path', 'Full URL', 'Block Type'],
-				allBroken.map(function (b) {
-					return [b.post_id, b.post_title, b.edit_link, b.relative_path, b.image_url, b.block_type];
-				})
-			);
-		});
-	}
+		emptyMessage: 'No broken images found.',
+	});
 })();

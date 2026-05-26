@@ -1,17 +1,18 @@
 <?php
 /**
- * Image Kit — Image Upgrader module.
+ * Image Kit — Markup Audit module.
  *
- * Scans post content for resized image variants and replaces them with
- * full-size originals from the media library.
+ * Scans Gutenberg image blocks for incomplete/malformed markup (missing id,
+ * sizeSlug, wp-image-* class, etc.) and proposes corrected block JSON.
+ * Shares the Image Upgrader scanner + batch runner + run-log infrastructure.
  */
 
 defined( 'ABSPATH' ) || exit;
 
-require_once __DIR__ . '/class-scanner.php';
-require_once __DIR__ . '/class-batch-runner.php';
+require_once IMAGE_KIT_PLUGIN_DIR . 'includes/modules/image-upgrader/class-scanner.php';
+require_once IMAGE_KIT_PLUGIN_DIR . 'includes/modules/image-upgrader/class-batch-runner.php';
 
-class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
+class Image_Kit_Module_Markup_Audit extends Image_Kit_Module {
 
 	/** @var Image_Kit_Core_Run_Log */
 	private $run_log;
@@ -21,27 +22,15 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 	}
 
 	public function get_slug(): string {
-		return 'image-upgrader';
+		return 'markup-audit';
 	}
 
 	public function get_name(): string {
-		return __( 'Restore Full Size', 'image-kit' );
+		return __( 'Repair Image Blocks', 'image-kit' );
 	}
 
 	public function get_description(): string {
-		return __( 'Replace downsized image variants with full-size originals from the media library.', 'image-kit' );
-	}
-
-	public function activate(): void {
-		$this->run_log->create_tables();
-
-		if ( ! wp_next_scheduled( 'image_kit_upgrader_cleanup' ) ) {
-			wp_schedule_event( time(), 'daily', 'image_kit_upgrader_cleanup' );
-		}
-	}
-
-	public function deactivate(): void {
-		wp_clear_scheduled_hook( 'image_kit_upgrader_cleanup' );
+		return __( 'Audit Gutenberg image blocks for missing or malformed metadata (sizeSlug, attachment id, wp-image-* class) and propose corrected block JSON.', 'image-kit' );
 	}
 
 	public function register_ajax_handlers(): void {
@@ -52,13 +41,11 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		add_action( 'wp_ajax_' . $this->ajax_action( 'discard_run' ), array( $this, 'ajax_discard_run' ) );
 		add_action( 'wp_ajax_' . $this->ajax_action( 'get_run_items' ), array( $this, 'ajax_get_run_items' ) );
 		add_action( 'wp_ajax_' . $this->ajax_action( 'apply_single_post' ), array( $this, 'ajax_apply_single_post' ) );
-		add_action( 'wp_ajax_' . $this->ajax_action( 'select_candidate' ), array( $this, 'ajax_select_candidate' ) );
 		add_action( 'wp_ajax_' . $this->ajax_action( 'resolve_missing' ), array( $this, 'ajax_resolve_missing' ) );
-
-		add_action( 'image_kit_upgrader_cleanup', array( $this, 'cron_discard_stale' ) );
 	}
 
 	public function enqueue_assets(): void {
+		// Needed by the Upload-replacement control on attachment_not_found rows.
 		wp_enqueue_media();
 
 		wp_enqueue_script(
@@ -70,27 +57,26 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		);
 
 		wp_enqueue_script(
-			'image-kit-image-upgrader',
-			IMAGE_KIT_PLUGIN_URL . 'assets/js/image-upgrader.js',
+			'image-kit-markup-audit',
+			IMAGE_KIT_PLUGIN_URL . 'assets/js/markup-audit.js',
 			array( 'image-kit-scan-ui' ),
 			IMAGE_KIT_VERSION,
 			true
 		);
 
-		$pending_review = $this->run_log->get_pending_review( array( 'scan' ) );
+		$pending_review = $this->run_log->get_pending_review( array( 'audit', 'audit_apply' ) );
 
-		wp_localize_script( 'image-kit-image-upgrader', 'imageKitUpgrader', array(
-			'startRunAction'      => $this->ajax_action( 'start_run' ),
-			'processBatchAction'  => $this->ajax_action( 'process_batch' ),
-			'applyRunAction'      => $this->ajax_action( 'apply_run' ),
-			'cancelRunAction'     => $this->ajax_action( 'cancel_run' ),
-			'discardRunAction'    => $this->ajax_action( 'discard_run' ),
-			'getRunItemsAction'   => $this->ajax_action( 'get_run_items' ),
-			'applySingleAction'   => $this->ajax_action( 'apply_single_post' ),
-			'selectCandidateAction' => $this->ajax_action( 'select_candidate' ),
+		wp_localize_script( 'image-kit-markup-audit', 'imageKitMarkupAudit', array(
+			'startRunAction'     => $this->ajax_action( 'start_run' ),
+			'processBatchAction' => $this->ajax_action( 'process_batch' ),
+			'applyRunAction'     => $this->ajax_action( 'apply_run' ),
+			'cancelRunAction'    => $this->ajax_action( 'cancel_run' ),
+			'discardRunAction'   => $this->ajax_action( 'discard_run' ),
+			'getRunItemsAction'  => $this->ajax_action( 'get_run_items' ),
+			'applySingleAction'  => $this->ajax_action( 'apply_single_post' ),
 			'resolveMissingAction' => $this->ajax_action( 'resolve_missing' ),
-			'batchSize'           => Image_Kit_Image_Upgrader_Batch_Runner::BATCH_SIZE,
-			'pendingReview'       => $pending_review ? array(
+			'batchSize'          => Image_Kit_Image_Upgrader_Batch_Runner::BATCH_SIZE,
+			'pendingReview'      => $pending_review ? array(
 				'run_id' => (int) $pending_review->id,
 				'status' => $pending_review->status,
 				'mode'   => $pending_review->mode,
@@ -98,12 +84,8 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		) );
 	}
 
-	public function cron_discard_stale(): void {
-		$this->run_log->discard_stale_reviews();
-	}
-
 	// ──────────────────────────────────────────────────────────────────
-	// AJAX Handlers
+	// AJAX
 	// ──────────────────────────────────────────────────────────────────
 
 	private function verify_ajax(): void {
@@ -116,47 +98,37 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 	public function ajax_start_run(): void {
 		$this->verify_ajax();
 
-		// Self-heal: any *scan-mode* 'running' / 'applying' row older than 5
+		// Self-heal: any *audit-mode* 'running' / 'applying' row older than 5
 		// minutes is almost certainly abandoned (closed browser, JS error).
-		// Scope to mode='scan' so Restore Full Size doesn't cancel a Repair
-		// Image Blocks run (or vice versa) running in another tab.
-		$this->run_log->clear_stale_active_runs( 5 * MINUTE_IN_SECONDS, array( 'scan' ) );
+		// Scope to audit modes so Repair Image Blocks doesn't cancel a
+		// Restore Full Size run (or vice versa) running in another tab.
+		$this->run_log->clear_stale_active_runs( 5 * MINUTE_IN_SECONDS, array( 'audit', 'audit_apply' ) );
 
 		$active = $this->run_log->get_active_run();
 		if ( $active ) {
-			wp_send_json_error( array(
-				'message' => __( 'A run is already in progress.', 'image-kit' ),
-			) );
+			wp_send_json_error( array( 'message' => __( 'A run is already in progress.', 'image-kit' ) ) );
 		}
 
-		$post_types = isset( $_POST['post_types'] ) ? array_map( 'sanitize_key', (array) $_POST['post_types'] ) : array( 'post', 'page' );
-
+		$post_types  = isset( $_POST['post_types'] ) ? array_map( 'sanitize_key', (array) $_POST['post_types'] ) : array( 'post', 'page' );
 		$valid_types = array_filter( $post_types, 'post_type_exists' );
 		if ( empty( $valid_types ) ) {
-			wp_send_json_error( array(
-				'message' => __( 'No valid post types selected.', 'image-kit' ),
-			) );
+			wp_send_json_error( array( 'message' => __( 'No valid post types selected.', 'image-kit' ) ) );
 		}
 
 		$batch_runner = new Image_Kit_Image_Upgrader_Batch_Runner( $this->run_log );
 		$total_posts  = $batch_runner->get_total_posts( $valid_types );
-
 		if ( 0 === $total_posts ) {
-			wp_send_json_error( array(
-				'message' => __( 'No published posts found for the selected post types.', 'image-kit' ),
-			) );
+			wp_send_json_error( array( 'message' => __( 'No published posts found for the selected post types.', 'image-kit' ) ) );
 		}
 
 		$run_id = $this->run_log->create_run( array(
 			'post_types' => implode( ',', $valid_types ),
 			'status'     => 'running',
-			'mode'       => 'scan',
+			'mode'       => 'audit',
 		) );
 
 		if ( ! $run_id ) {
-			wp_send_json_error( array(
-				'message' => __( 'Failed to create run record.', 'image-kit' ),
-			) );
+			wp_send_json_error( array( 'message' => __( 'Failed to create run record.', 'image-kit' ) ) );
 		}
 
 		wp_send_json_success( array(
@@ -179,7 +151,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		}
 
 		$batch_runner = new Image_Kit_Image_Upgrader_Batch_Runner( $this->run_log );
-		$result       = $batch_runner->process_scan_batch( $run_id, $offset, $post_types, $total_posts );
+		$result       = $batch_runner->process_audit_batch( $run_id, $offset, $post_types, $total_posts );
 
 		if ( $result['success'] ) {
 			wp_send_json_success( $result );
@@ -208,7 +180,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		}
 
 		$batch_runner = new Image_Kit_Image_Upgrader_Batch_Runner( $this->run_log );
-		$result       = $batch_runner->process_apply_batch( $run_id, $offset );
+		$result       = $batch_runner->process_audit_apply_batch( $run_id, $offset );
 
 		if ( $result['success'] ) {
 			wp_send_json_success( $result );
@@ -219,9 +191,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 
 	public function ajax_cancel_run(): void {
 		$this->verify_ajax();
-
 		$run_id = isset( $_POST['run_id'] ) ? absint( $_POST['run_id'] ) : 0;
-
 		if ( ! $run_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid run ID.', 'image-kit' ) ) );
 		}
@@ -243,26 +213,20 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 
 	public function ajax_discard_run(): void {
 		$this->verify_ajax();
-
 		$run_id = isset( $_POST['run_id'] ) ? absint( $_POST['run_id'] ) : 0;
-
 		if ( ! $run_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid run ID.', 'image-kit' ) ) );
 		}
-
 		$this->run_log->update_run( $run_id, array(
 			'status'       => 'discarded',
 			'completed_at' => current_time( 'mysql', true ),
 		) );
-
 		wp_send_json_success();
 	}
 
 	public function ajax_get_run_items(): void {
 		$this->verify_ajax();
-
 		$run_id = isset( $_POST['run_id'] ) ? absint( $_POST['run_id'] ) : 0;
-
 		if ( ! $run_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid run ID.', 'image-kit' ) ) );
 		}
@@ -294,7 +258,6 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 
 		$run_id  = isset( $_POST['run_id'] ) ? absint( $_POST['run_id'] ) : 0;
 		$item_id = isset( $_POST['item_id'] ) ? absint( $_POST['item_id'] ) : 0;
-
 		if ( ! $run_id || ! $item_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid parameters.', 'image-kit' ) ) );
 		}
@@ -320,18 +283,8 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 			) );
 		}
 
-		$selections   = array();
-		$replacements = json_decode( $item->replacements, true );
-		if ( is_array( $replacements ) ) {
-			foreach ( $replacements as $rep ) {
-				if ( ! empty( $rep['candidates'] ) && ! empty( $rep['attachment_id'] ) && ! empty( $rep['from_url'] ) ) {
-					$selections[ $rep['from_url'] ] = (int) $rep['attachment_id'];
-				}
-			}
-		}
-
 		$scanner      = new Image_Kit_Image_Upgrader_Scanner();
-		$apply_result = $scanner->scan_post( $item->post_id, false, $selections );
+		$apply_result = $scanner->audit_post( $item->post_id, false );
 
 		if ( ! empty( $apply_result['error_message'] ) ) {
 			wp_send_json_error( array( 'message' => $apply_result['error_message'] ) );
@@ -347,9 +300,10 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 	}
 
 	/**
-	 * Upload-replacement handler. Persists a URL → attachment alias and
-	 * re-runs scan_post() (dry-run) for the affected item so a previously
-	 * `attachment_not_found` row becomes actionable in place.
+	 * Upload-replacement handler: the user supplied an attachment for a URL
+	 * the automatic lookup couldn't resolve. Persist the mapping, re-audit
+	 * the item, and return the refreshed payload so the JS can swap the row
+	 * in place without a full rescan.
 	 */
 	public function ajax_resolve_missing(): void {
 		$this->verify_ajax();
@@ -379,8 +333,8 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		$scanner = new Image_Kit_Image_Upgrader_Scanner();
 		$scanner->record_url_alias( $url, $attachment_id );
 
-		// Re-scan (dry-run) so the row reflects the new resolution.
-		$result = $scanner->scan_post( $item->post_id, true );
+		// Re-audit (dry-run) so the row reflects the new resolution.
+		$result = $scanner->audit_post( $item->post_id, true );
 
 		$this->run_log->update_item_replacements(
 			$item_id,
@@ -410,59 +364,6 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		) );
 	}
 
-	public function ajax_select_candidate(): void {
-		$this->verify_ajax();
-
-		$item_id       = isset( $_POST['item_id'] ) ? absint( $_POST['item_id'] ) : 0;
-		$rep_index     = isset( $_POST['rep_index'] ) ? absint( $_POST['rep_index'] ) : 0;
-		$attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
-
-		if ( ! $item_id || ! $attachment_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid parameters.', 'image-kit' ) ) );
-		}
-
-		$item = $this->run_log->get_item( $item_id );
-		if ( ! $item || empty( $item->replacements ) ) {
-			wp_send_json_error( array( 'message' => __( 'Item not found.', 'image-kit' ) ) );
-		}
-
-		$replacements = json_decode( $item->replacements, true );
-		if ( ! is_array( $replacements ) || ! isset( $replacements[ $rep_index ] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Replacement not found.', 'image-kit' ) ) );
-		}
-
-		$rep = &$replacements[ $rep_index ];
-
-		if ( empty( $rep['candidates'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'No candidates for this replacement.', 'image-kit' ) ) );
-		}
-
-		$chosen = null;
-		foreach ( $rep['candidates'] as $candidate ) {
-			if ( (int) $candidate['attachment_id'] === $attachment_id ) {
-				$chosen = $candidate;
-				break;
-			}
-		}
-
-		if ( ! $chosen ) {
-			wp_send_json_error( array( 'message' => __( 'Candidate not found.', 'image-kit' ) ) );
-		}
-
-		$rep['attachment_id']     = $chosen['attachment_id'];
-		$rep['to_url']            = $chosen['to_url'];
-		$rep['to_dimensions']     = $chosen['to_dimensions'];
-		$rep['original_filename'] = wp_basename( $chosen['to_url'] );
-
-		$this->run_log->update_item_replacements( (int) $item->id, $replacements );
-
-		wp_send_json_success( array(
-			'attachment_id' => $chosen['attachment_id'],
-			'to_url'        => $chosen['to_url'],
-			'to_dimensions' => $chosen['to_dimensions'],
-		) );
-	}
-
 	// ──────────────────────────────────────────────────────────────────
 	// Tab Content
 	// ──────────────────────────────────────────────────────────────────
@@ -472,16 +373,14 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 		unset( $post_types['attachment'] );
 		$default_checked = array( 'post', 'page' );
 		?>
-
-		<!-- Configuration -->
-		<div class="ik-panel ik-scan-config" id="ik-iu-config">
-			<h3><?php esc_html_e( 'Scan Configuration', 'image-kit' ); ?></h3>
+		<div class="ik-panel ik-scan-config" id="ik-ma-config">
+			<h3><?php esc_html_e( 'Audit Configuration', 'image-kit' ); ?></h3>
 			<fieldset>
 				<legend><?php esc_html_e( 'Post Types', 'image-kit' ); ?></legend>
 				<?php foreach ( $post_types as $pt ) : ?>
 					<label>
 						<input type="checkbox"
-							name="ik_iu_post_types[]"
+							name="ik_ma_post_types[]"
 							value="<?php echo esc_attr( $pt->name ); ?>"
 							<?php checked( in_array( $pt->name, $default_checked, true ) ); ?>>
 						<?php echo esc_html( $pt->labels->name ); ?>
@@ -489,15 +388,12 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 				<?php endforeach; ?>
 			</fieldset>
 			<p>
-				<button type="button" id="ik-iu-start-scan" class="button button-primary"><?php esc_html_e( 'Scan', 'image-kit' ); ?></button>
+				<button type="button" id="ik-ma-start" class="button button-primary"><?php esc_html_e( 'Run Audit', 'image-kit' ); ?></button>
 			</p>
 		</div>
 
-		<!-- Progress (rendered by scan-ui helper) -->
-		<div class="ik-panel ik-scan-progress" id="ik-iu-progress"></div>
-
-		<!-- Review-and-apply (rendered by scan-ui helper) -->
-		<div class="ik-panel ik-scan-results" id="ik-iu-results"></div>
+		<div class="ik-panel ik-scan-progress" id="ik-ma-progress"></div>
+		<div class="ik-panel ik-scan-results" id="ik-ma-results"></div>
 		<?php
 	}
 }

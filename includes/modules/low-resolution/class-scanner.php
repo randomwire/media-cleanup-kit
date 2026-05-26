@@ -8,6 +8,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
+require_once IMAGE_KIT_PLUGIN_DIR . 'includes/core/class-block-parser.php';
+
 class Image_Kit_Low_Resolution_Scanner {
 
 	/**
@@ -68,9 +70,10 @@ class Image_Kit_Low_Resolution_Scanner {
 	 * @param string   $date_from  Optional date range start.
 	 * @param string   $date_to    Optional date range end.
 	 * @param int      $known_total Known total to skip COUNT query on subsequent batches.
+	 * @param string[] $size_slugs  Optional whitelist of size slugs to include. Empty = include all.
 	 * @return array { items: array, offset: int, total_posts: int, done: bool }
 	 */
-	public function scan_batch( $post_types, $offset, $batch_size, $threshold = 2048, $date_from = '', $date_to = '', $known_total = 0 ) {
+	public function scan_batch( $post_types, $offset, $batch_size, $threshold = 2048, $date_from = '', $date_to = '', $known_total = 0, $size_slugs = array() ) {
 		$need_total = ( 0 === $known_total );
 
 		$args = array(
@@ -102,7 +105,7 @@ class Image_Kit_Low_Resolution_Scanner {
 		$items = array();
 
 		foreach ( $post_ids as $post_id ) {
-			$found = $this->scan_post( $post_id, $threshold );
+			$found = $this->scan_post( $post_id, $threshold, $size_slugs );
 			$items = array_merge( $items, $found );
 		}
 
@@ -123,11 +126,12 @@ class Image_Kit_Low_Resolution_Scanner {
 	 * Parses wp:image Gutenberg blocks and extracts image src URLs,
 	 * resolves attachment IDs, reads dimensions from disk.
 	 *
-	 * @param int $post_id   Post ID.
-	 * @param int $threshold Minimum longest side in pixels. 0 = include all.
+	 * @param int      $post_id    Post ID.
+	 * @param int      $threshold  Minimum longest side in pixels. 0 = include all.
+	 * @param string[] $size_slugs Optional whitelist of size slugs to include. Empty = include all.
 	 * @return array Array of found items.
 	 */
-	public function scan_post( $post_id, $threshold = 2048 ) {
+	public function scan_post( $post_id, $threshold = 2048, $size_slugs = array() ) {
 		$post = get_post( $post_id );
 		if ( ! $post ) {
 			return array();
@@ -157,6 +161,11 @@ class Image_Kit_Low_Resolution_Scanner {
 				continue;
 			}
 			$src_url = $img_match[1];
+
+			$slug = isset( $attrs['sizeSlug'] ) ? $attrs['sizeSlug'] : '';
+			if ( ! empty( $size_slugs ) && ! in_array( $slug, $size_slugs, true ) ) {
+				continue;
+			}
 
 			// Get attachment ID from block attrs or URL lookup.
 			$attachment_id = isset( $attrs['id'] ) ? (int) $attrs['id'] : 0;
@@ -188,6 +197,11 @@ class Image_Kit_Low_Resolution_Scanner {
 				$thumbnail_url = wp_get_attachment_image_url( $attachment_id, 'thumbnail' ) ?: '';
 			}
 
+			// Skip items we couldn't measure — we can't classify them as low-res.
+			if ( 0 === $longest_side ) {
+				continue;
+			}
+
 			// Apply threshold filter: 0 = include all, otherwise skip if at/above threshold.
 			if ( $threshold > 0 && $longest_side >= $threshold ) {
 				continue;
@@ -213,8 +227,86 @@ class Image_Kit_Low_Resolution_Scanner {
 			);
 		}
 
+		// Second pass: catch images in wp:gallery / wp:cover / wp:media-text /
+		// self-closing wp:image / raw <img> tags. The unspecified-slug filter
+		// path is the only relevant size-slug filter here (block_type is not a
+		// registered image size). These items have an empty size_slug.
+		$slug_filter_allows_unspecified = empty( $size_slugs ) || in_array( '', $size_slugs, true );
+		if ( $slug_filter_allows_unspecified && ! empty( $post->post_content ) ) {
+			$block_parser = new Image_Kit_Core_Block_Parser();
+			$parsed       = $block_parser->extract_image_urls( $post->post_content );
+
+			$seen_urls = array();
+			foreach ( $items as $existing ) {
+				if ( ! empty( $existing['src_url'] ) ) {
+					$seen_urls[ $this->normalise_url( $existing['src_url'] ) ] = true;
+				}
+			}
+
+			foreach ( $parsed as $row ) {
+				$url = isset( $row['url'] ) ? $row['url'] : '';
+				if ( '' === $url ) {
+					continue;
+				}
+				$key = $this->normalise_url( $url );
+				if ( isset( $seen_urls[ $key ] ) ) {
+					continue;
+				}
+
+				$attachment_id = $this->get_attachment_id_by_url( $url );
+				if ( $attachment_id && isset( $seen_attachments[ $attachment_id ] ) ) {
+					continue;
+				}
+
+				$width = 0;
+				$height = 0;
+				$longest_side = 0;
+				$file_path = '';
+				$thumbnail_url = '';
+
+				if ( $attachment_id ) {
+					$dims = $this->get_dimensions( $attachment_id );
+					if ( ! isset( $dims['error'] ) ) {
+						$width        = $dims['width'];
+						$height       = $dims['height'];
+						$longest_side = max( $width, $height );
+					}
+					$file_path     = get_attached_file( $attachment_id ) ?: '';
+					$thumbnail_url = wp_get_attachment_image_url( $attachment_id, 'thumbnail' ) ?: '';
+				}
+
+				if ( 0 === $longest_side ) {
+					continue;
+				}
+				if ( $threshold > 0 && $longest_side >= $threshold ) {
+					continue;
+				}
+
+				if ( $attachment_id ) {
+					$seen_attachments[ $attachment_id ] = true;
+				}
+				$seen_urls[ $key ] = true;
+
+				$items[] = array(
+					'post_id'        => (int) $post_id,
+					'post_title'     => $post->post_title,
+					'edit_link'      => get_edit_post_link( $post_id, 'raw' ) ?: '',
+					'attachment_id'  => $attachment_id,
+					'src_url'        => $url,
+					'file_path'      => $file_path,
+					'width'          => $width,
+					'height'         => $height,
+					'longest_side'   => $longest_side,
+					'thumbnail_url'  => $thumbnail_url,
+					'size_slug'      => '',
+					'source'         => isset( $row['block_type'] ) ? $row['block_type'] : 'content',
+				);
+			}
+		}
+
 		$featured_attachment_id = (int) get_post_thumbnail_id( $post_id );
-		if ( $featured_attachment_id > 0 && ! isset( $seen_attachments[ $featured_attachment_id ] ) ) {
+		$featured_allowed       = empty( $size_slugs ) || in_array( 'featured-image', $size_slugs, true );
+		if ( $featured_allowed && $featured_attachment_id > 0 && ! isset( $seen_attachments[ $featured_attachment_id ] ) ) {
 			$dims = $this->get_dimensions( $featured_attachment_id );
 			$width = 0;
 			$height = 0;
@@ -226,7 +318,7 @@ class Image_Kit_Low_Resolution_Scanner {
 				$longest_side = max( $width, $height );
 			}
 
-			if ( 0 === $threshold || $longest_side < $threshold ) {
+			if ( $longest_side > 0 && ( 0 === $threshold || $longest_side < $threshold ) ) {
 				$items[] = array(
 					'post_id'        => (int) $post_id,
 					'post_title'     => $post->post_title,
@@ -253,6 +345,14 @@ class Image_Kit_Low_Resolution_Scanner {
 	 * @param string $url Image URL.
 	 * @return int Attachment ID or 0.
 	 */
+	/**
+	 * Normalise a URL for deduplication: strip query string and protocol.
+	 */
+	private function normalise_url( $url ) {
+		$base = strtok( $url, '?' );
+		return preg_replace( '#^https?://#', '//', $base );
+	}
+
 	private function get_attachment_id_by_url( $url ) {
 		if ( isset( $this->url_to_id_cache[ $url ] ) ) {
 			return $this->url_to_id_cache[ $url ];

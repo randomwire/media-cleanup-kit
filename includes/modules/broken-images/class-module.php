@@ -20,7 +20,7 @@ class Image_Kit_Module_Broken_Images extends Image_Kit_Module {
 	}
 
 	public function get_name(): string {
-		return __( 'Broken Images', 'image-kit' );
+		return __( 'Find Broken Images', 'image-kit' );
 	}
 
 	public function get_description(): string {
@@ -29,21 +29,30 @@ class Image_Kit_Module_Broken_Images extends Image_Kit_Module {
 
 	public function register_ajax_handlers(): void {
 		add_action( 'wp_ajax_' . $this->ajax_action( 'scan' ), array( $this, 'ajax_scan' ) );
+		add_action( 'wp_ajax_' . $this->ajax_action( 'apply_remove' ), array( $this, 'ajax_apply_remove' ) );
 	}
 
 	public function enqueue_assets(): void {
 		wp_enqueue_script(
-			'image-kit-broken-images',
-			IMAGE_KIT_PLUGIN_URL . 'assets/js/broken-images.js',
+			'image-kit-scan-ui',
+			IMAGE_KIT_PLUGIN_URL . 'assets/js/scan-ui.js',
 			array( 'image-kit-admin' ),
 			IMAGE_KIT_VERSION,
 			true
 		);
 
+		wp_enqueue_script(
+			'image-kit-broken-images',
+			IMAGE_KIT_PLUGIN_URL . 'assets/js/broken-images.js',
+			array( 'image-kit-scan-ui' ),
+			IMAGE_KIT_VERSION,
+			true
+		);
+
 		wp_localize_script( 'image-kit-broken-images', 'imageKitBrokenImages', array(
-			'action'    => $this->ajax_action( 'scan' ),
-			'batchSize' => self::BATCH_SIZE,
-			'pageSize'  => self::PAGE_SIZE,
+			'action'            => $this->ajax_action( 'scan' ),
+			'applyRemoveAction' => $this->ajax_action( 'apply_remove' ),
+			'batchSize'         => self::BATCH_SIZE,
 		) );
 	}
 
@@ -55,25 +64,74 @@ class Image_Kit_Module_Broken_Images extends Image_Kit_Module {
 		}
 
 		$scanner     = new Image_Kit_Broken_Images_Scanner();
-		$post_offset = absint( $_POST['post_offset'] ?? 0 );
-		$post_total  = $scanner->get_candidate_post_count();
-		$posts       = $scanner->get_post_batch( $post_offset, self::BATCH_SIZE );
+		$offset      = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
+		$known_total = isset( $_POST['total'] ) ? absint( $_POST['total'] ) : 0;
+		$post_total  = ( 0 === $known_total ) ? $scanner->get_candidate_post_count() : $known_total;
+		$posts       = $scanner->get_post_batch( $offset, self::BATCH_SIZE );
 		$broken      = $scanner->check_posts( $posts );
-		$processed   = min( $post_offset + self::BATCH_SIZE, $post_total );
+
+		$batch_count = is_array( $posts ) ? count( $posts ) : 0;
+		$processed   = $offset + $batch_count;
+		$done        = $batch_count < self::BATCH_SIZE || $processed >= $post_total;
+
+		// Stamp each broken item with a stable id (helper needs rowKey).
+		$idx = $offset * 100;
+		foreach ( $broken as &$b ) {
+			$b['id'] = ++$idx;
+		}
+		unset( $b );
+
+		$log_lines = array();
+		if ( ! empty( $broken ) ) {
+			$log_lines[] = array(
+				'type'  => 'info',
+				'title' => sprintf( '%d broken reference(s) in this batch', count( $broken ) ),
+			);
+		}
 
 		wp_send_json_success( array(
-			'broken'          => $broken,
-			'posts_processed' => $processed,
-			'posts_total'     => $post_total,
-			'done'            => $processed >= $post_total,
+			'items'     => $broken,
+			'offset'    => $processed,
+			'total'     => $post_total,
+			'done'      => $done,
+			'progress'  => array(
+				'posts_scanned' => $processed,
+				'broken_found'  => 0, // accumulated client-side from items.length
+			),
+			'log_lines' => $log_lines,
 		) );
+	}
+
+	public function ajax_apply_remove(): void {
+		check_ajax_referer( Image_Kit_Admin_Page::NONCE_ACTION, 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'image-kit' ) ), 403 );
+		}
+
+		$post_id    = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+		$image_url  = isset( $_POST['image_url'] ) ? esc_url_raw( wp_unslash( $_POST['image_url'] ) ) : '';
+		$block_type = isset( $_POST['block_type'] ) ? sanitize_text_field( wp_unslash( $_POST['block_type'] ) ) : '';
+
+		if ( ! $post_id || '' === $image_url || '' === $block_type ) {
+			wp_send_json_error( array( 'message' => __( 'Missing required parameters.', 'image-kit' ) ) );
+		}
+
+		$scanner = new Image_Kit_Broken_Images_Scanner();
+		$result  = $scanner->remove_broken_from_post( $post_id, $image_url, $block_type );
+
+		if ( ! $result['success'] ) {
+			wp_send_json_error( $result );
+		}
+
+		wp_send_json_success( $result );
 	}
 
 	public function render_tab_content(): void {
 		$scanner    = new Image_Kit_Broken_Images_Scanner();
 		$post_count = $scanner->get_candidate_post_count();
 		?>
-		<div id="ik-bi-status">
+		<div class="ik-panel ik-scan-config" id="ik-bi-config">
 			<p>
 				<?php
 				printf(
@@ -84,45 +142,18 @@ class Image_Kit_Module_Broken_Images extends Image_Kit_Module {
 				?>
 			</p>
 			<?php if ( $post_count > 0 ) : ?>
-				<button type="button" id="ik-bi-scan" class="button button-primary"
-					data-total="<?php echo (int) $post_count; ?>">
-					<?php esc_html_e( 'Scan for Broken Images', 'image-kit' ); ?>
-				</button>
+				<p>
+					<button type="button" id="ik-bi-scan" class="button button-primary" data-total="<?php echo (int) $post_count; ?>">
+						<?php esc_html_e( 'Scan for Broken Images', 'image-kit' ); ?>
+					</button>
+				</p>
 			<?php else : ?>
 				<p><em><?php esc_html_e( 'No posts with image references found.', 'image-kit' ); ?></em></p>
 			<?php endif; ?>
 		</div>
 
-		<div id="ik-bi-progress" class="ik-progress" style="display:none;">
-			<p><?php esc_html_e( 'Scanning posts…', 'image-kit' ); ?>
-				<span class="ik-progress-text">0 / <?php echo esc_html( number_format_i18n( $post_count ) ); ?> <?php esc_html_e( 'posts checked', 'image-kit' ); ?></span>
-			</p>
-			<div class="ik-progress-bar"><div class="ik-progress-fill"></div></div>
-		</div>
-
-		<div id="ik-bi-results" style="display:none;">
-			<h2><?php esc_html_e( 'Scan Results', 'image-kit' ); ?></h2>
-			<p id="ik-bi-summary"></p>
-
-			<p id="ik-bi-export-wrap" style="display:none;">
-				<button type="button" id="ik-bi-export" class="button"><?php esc_html_e( 'Export CSV', 'image-kit' ); ?></button>
-			</p>
-
-			<div id="ik-bi-pagination"></div>
-
-			<table class="widefat striped" id="ik-bi-table" style="display:none;">
-				<thead>
-					<tr>
-						<th><?php esc_html_e( 'Post', 'image-kit' ); ?></th>
-						<th><?php esc_html_e( 'Broken Image', 'image-kit' ); ?></th>
-						<th><?php esc_html_e( 'Block Type', 'image-kit' ); ?></th>
-					</tr>
-				</thead>
-				<tbody id="ik-bi-tbody"></tbody>
-			</table>
-
-			<div id="ik-bi-pagination-bottom"></div>
-		</div>
+		<div class="ik-panel ik-scan-progress" id="ik-bi-progress"></div>
+		<div class="ik-panel ik-scan-results" id="ik-bi-results"></div>
 		<?php
 	}
 }

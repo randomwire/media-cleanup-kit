@@ -78,6 +78,16 @@ class Image_Kit_Admin_Page {
 			true
 		);
 
+		// Shared lightbox helper — auto-wires to .ik-thumb and .ik-iu-thumbnail
+		// clicks inside #image-kit-app. No dependencies.
+		wp_enqueue_script(
+			'image-kit-lightbox',
+			IMAGE_KIT_PLUGIN_URL . 'assets/js/lightbox.js',
+			array(),
+			IMAGE_KIT_VERSION,
+			true
+		);
+
 		wp_localize_script( 'image-kit-admin', 'imageKit', array(
 			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 			'nonce'   => wp_create_nonce( self::NONCE_ACTION ),
@@ -107,30 +117,34 @@ class Image_Kit_Admin_Page {
 				<?php return; ?>
 			<?php endif; ?>
 
-			<!-- Tab navigation -->
-			<div class="ik-tabs" role="tablist">
-				<?php foreach ( $module_list as $i => $module ) : ?>
-					<button type="button"
-						class="ik-tab<?php echo 0 === $i ? ' active' : ''; ?>"
-						role="tab"
-						data-tab="<?php echo esc_attr( $module->get_slug() ); ?>"
-						aria-selected="<?php echo 0 === $i ? 'true' : 'false'; ?>"
-						aria-controls="ik-tab-<?php echo esc_attr( $module->get_slug() ); ?>">
-						<?php echo esc_html( $module->get_name() ); ?>
-					</button>
-				<?php endforeach; ?>
-			</div>
-
-			<!-- Tab panels -->
-			<?php foreach ( $module_list as $i => $module ) : ?>
-				<div id="ik-tab-<?php echo esc_attr( $module->get_slug() ); ?>"
-					class="ik-tab-content"
-					role="tabpanel"
-					style="<?php echo 0 !== $i ? 'display:none;' : ''; ?>">
-					<p class="description"><?php echo esc_html( $module->get_description() ); ?></p>
-					<?php $module->render_tab_content(); ?>
+			<div class="ik-tabs-wrap">
+				<!-- Tab navigation (left sidebar) -->
+				<div class="ik-tabs" role="tablist">
+					<?php foreach ( $module_list as $i => $module ) : ?>
+						<button type="button"
+							class="ik-tab<?php echo 0 === $i ? ' active' : ''; ?>"
+							role="tab"
+							data-tab="<?php echo esc_attr( $module->get_slug() ); ?>"
+							aria-selected="<?php echo 0 === $i ? 'true' : 'false'; ?>"
+							aria-controls="ik-tab-<?php echo esc_attr( $module->get_slug() ); ?>">
+							<?php echo esc_html( $module->get_name() ); ?>
+						</button>
+					<?php endforeach; ?>
 				</div>
-			<?php endforeach; ?>
+
+				<!-- Tab panels -->
+				<div class="ik-tab-panels">
+					<?php foreach ( $module_list as $i => $module ) : ?>
+						<div id="ik-tab-<?php echo esc_attr( $module->get_slug() ); ?>"
+							class="ik-tab-content"
+							role="tabpanel"
+							style="<?php echo 0 !== $i ? 'display:none;' : ''; ?>">
+							<p class="description"><?php echo esc_html( $module->get_description() ); ?></p>
+							<?php $module->render_tab_content(); ?>
+						</div>
+					<?php endforeach; ?>
+				</div>
+			</div>
 		</div>
 		<?php
 	}
