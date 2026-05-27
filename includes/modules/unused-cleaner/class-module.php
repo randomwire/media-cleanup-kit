@@ -143,17 +143,18 @@ class Image_Kit_Module_Unused_Cleaner extends Image_Kit_Module {
 	public function render_tab_content(): void {
 		?>
 		<div class="ik-panel ik-scan-config" id="ik-uc-config">
-			<p class="description">
+			<?php $this->render_panel_header(); ?>
+			<p>
+				<button id="ik-uc-scan-btn" class="button button-primary"><?php esc_html_e( 'Scan Uploads', 'media-cleanup-kit' ); ?></button>
+			</p>
+			<p class="ik-panel-status">
 				<?php
 				printf(
 					/* translators: %s: absolute path to the WordPress uploads directory. */
-					esc_html__( 'Scans the WordPress uploads directory (%s) for image files not referenced anywhere on the site.', 'media-cleanup-kit' ),
+					esc_html__( 'Scans %s for image files not referenced anywhere on the site.', 'media-cleanup-kit' ),
 					'<code>' . esc_html( wp_upload_dir()['basedir'] ) . '</code>'
 				);
 				?>
-			</p>
-			<p>
-				<button id="ik-uc-scan-btn" class="button button-primary"><?php esc_html_e( 'Scan Uploads', 'media-cleanup-kit' ); ?></button>
 			</p>
 		</div>
 

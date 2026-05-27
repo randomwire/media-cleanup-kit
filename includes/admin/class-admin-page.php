@@ -115,7 +115,7 @@ class Image_Kit_Admin_Page {
 			<div class="notice notice-warning ik-admin-warning">
 				<p>
 					<strong><?php esc_html_e( 'Back up your database and uploads directory before running any action.', 'media-cleanup-kit' ); ?></strong>
-					<?php esc_html_e( 'Media Cleanup Kit modifies post content, attachment metadata, and files on disk. While each destructive action has its own confirmation step and many create per-post HTML backups, you are solely responsible for any unintended consequences. Test on a staging site if possible.', 'media-cleanup-kit' ); ?>
+					<?php esc_html_e( 'Media Cleanup Kit modifies post content, attachment metadata, and files on disk. While each destructive action has its own confirmation step and many create per-post revisions, you are solely responsible for any unintended consequences. Test on a staging site if possible.', 'media-cleanup-kit' ); ?>
 				</p>
 			</div>
 
@@ -146,7 +146,6 @@ class Image_Kit_Admin_Page {
 							class="ik-tab-content"
 							role="tabpanel"
 							style="<?php echo 0 !== $i ? 'display:none;' : ''; ?>">
-							<p class="description"><?php echo esc_html( $module->get_description() ); ?></p>
 							<?php $module->render_tab_content(); ?>
 						</div>
 					<?php endforeach; ?>

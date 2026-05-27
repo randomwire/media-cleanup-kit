@@ -63,6 +63,19 @@ abstract class Image_Kit_Module {
 	public static function uninstall(): void {}
 
 	/**
+	 * Render the standard panel header (heading + descriptive subheading)
+	 * shown at the top of each module's scan-controls box. Reuses
+	 * get_name() / get_description() so the header always matches the tab.
+	 */
+	protected function render_panel_header(): void {
+		printf(
+			'<h2 class="ik-panel-title">%s</h2><p class="ik-panel-description description">%s</p>',
+			esc_html( $this->get_name() ),
+			esc_html( $this->get_description() )
+		);
+	}
+
+	/**
 	 * Helper: get the AJAX action name for this module.
 	 */
 	protected function ajax_action( string $action ): string {

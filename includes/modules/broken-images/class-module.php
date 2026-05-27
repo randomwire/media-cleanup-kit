@@ -132,7 +132,8 @@ class Image_Kit_Module_Broken_Images extends Image_Kit_Module {
 		$post_count = $scanner->get_candidate_post_count();
 		?>
 		<div class="ik-panel ik-scan-config" id="ik-bi-config">
-			<p>
+			<?php $this->render_panel_header(); ?>
+			<p class="ik-panel-status">
 				<?php
 				printf(
 					/* translators: %s: number of posts */

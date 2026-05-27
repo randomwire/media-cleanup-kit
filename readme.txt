@@ -5,7 +5,7 @@ Tags: media, images, cleanup, broken images, attachments
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.36
+Stable tag: 1.0.37
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,7 +30,7 @@ Every tool follows the same flow: **scan → review → apply**, with a results 
 
 = Safety =
 
-Media Cleanup Kit modifies post content, attachment metadata, and files on disk. Every destructive action has its own confirmation step. Many create per-post HTML backups (`wp-content/uploads/image-kit-backup/posts/{post_id}-{timestamp}.html`) before mutation. **Always back up your database and uploads directory before running anything.** Test on a staging site if possible.
+Media Cleanup Kit modifies post content, attachment metadata, and files on disk. While each destructive action has its own confirmation step and many create per-post revisions, you are solely responsible for any unintended consequences. Test on a staging site if possible.
 
 == Installation ==
 
@@ -80,6 +80,9 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 
 == Changelog ==
 
+= 1.0.37 =
+* Consistent per-tool panel header: every module now renders an `<h2>` heading matching the tab name plus a descriptive subheading inside the scan-controls box. Removes inconsistent `<h3>` / inline-`<p>` patterns and the duplicate description that previously appeared above the box.
+
 = 1.0.36 =
 * Renamed plugin to Media Cleanup Kit (was previously "Image Kit" — renamed to avoid a name collision with the commercial ImageKit.io service).
 * Full WordPress.org compliance pass: added `readme.txt`, `LICENSE`, translation loader, build exclusions, prominent backup warning on the admin page.
@@ -120,6 +123,9 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 For the full version-by-version history see the `CHANGELOG.md` file in the GitHub repository.
 
 == Upgrade Notice ==
+
+= 1.0.37 =
+UI polish only — every tool tab now shows a uniform heading + subheading inside its scan-controls box. No data or behaviour changes.
 
 = 1.0.36 =
 Plugin renamed from "Image Kit" to "Media Cleanup Kit". No data migration required — internal database tables and options keep their existing names. WP.org compliance pass.

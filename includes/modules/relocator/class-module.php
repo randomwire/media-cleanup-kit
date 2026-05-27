@@ -122,8 +122,7 @@ class Image_Kit_Module_Relocator extends Image_Kit_Module {
 	public function render_tab_content(): void {
 		?>
 		<div class="ik-panel ik-scan-config" id="ik-rel-config">
-			<h3><?php esc_html_e( 'Scan for Relocatable Images', 'media-cleanup-kit' ); ?></h3>
-			<p><?php esc_html_e( 'Scans all subdirectories of the uploads folder for media library images that can be moved to the uploads root.', 'media-cleanup-kit' ); ?></p>
+			<?php $this->render_panel_header(); ?>
 			<p>
 				<button type="button" id="ik-rel-scan" class="button button-primary"><?php esc_html_e( 'Scan for Images', 'media-cleanup-kit' ); ?></button>
 			</p>

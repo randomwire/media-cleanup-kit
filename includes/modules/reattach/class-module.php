@@ -128,11 +128,12 @@ class Image_Kit_Module_Reattach extends Image_Kit_Module {
 		$count = ( new Image_Kit_Reattach_Scanner() )->count_unattached();
 		?>
 		<div class="ik-panel ik-scan-config" id="ik-ra-config">
-			<p class="description">
+			<?php $this->render_panel_header(); ?>
+			<p class="ik-panel-status">
 				<?php
 				printf(
-					/* translators: %s: HTML <strong> count of unattached attachments. */
-					esc_html__( 'Find media library items with no parent post (currently %s) and attach them to the first post that references them.', 'media-cleanup-kit' ),
+					/* translators: %s: number of unattached attachments. */
+					esc_html__( 'Currently %s unattached item(s).', 'media-cleanup-kit' ),
 					'<strong>' . esc_html( number_format_i18n( $count ) ) . '</strong>'
 				);
 				?>

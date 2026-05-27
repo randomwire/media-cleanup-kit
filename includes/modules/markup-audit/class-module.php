@@ -374,7 +374,7 @@ class Image_Kit_Module_Markup_Audit extends Image_Kit_Module {
 		$default_checked = array( 'post', 'page' );
 		?>
 		<div class="ik-panel ik-scan-config" id="ik-ma-config">
-			<h3><?php esc_html_e( 'Audit Configuration', 'media-cleanup-kit' ); ?></h3>
+			<?php $this->render_panel_header(); ?>
 			<fieldset>
 				<legend><?php esc_html_e( 'Post Types', 'media-cleanup-kit' ); ?></legend>
 				<?php foreach ( $post_types as $pt ) : ?>

@@ -475,7 +475,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 
 		<!-- Configuration -->
 		<div class="ik-panel ik-scan-config" id="ik-iu-config">
-			<h3><?php esc_html_e( 'Scan Configuration', 'media-cleanup-kit' ); ?></h3>
+			<?php $this->render_panel_header(); ?>
 			<fieldset>
 				<legend><?php esc_html_e( 'Post Types', 'media-cleanup-kit' ); ?></legend>
 				<?php foreach ( $post_types as $pt ) : ?>

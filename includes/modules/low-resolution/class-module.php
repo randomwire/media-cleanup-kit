@@ -164,6 +164,7 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 		$post_types = get_post_types( array( 'public' => true ), 'objects' );
 		?>
 		<div class="ik-panel ik-scan-config" id="ik-lr-config">
+			<?php $this->render_panel_header(); ?>
 			<fieldset>
 				<legend><strong><?php esc_html_e( 'Post types to scan:', 'media-cleanup-kit' ); ?></strong></legend>
 				<?php

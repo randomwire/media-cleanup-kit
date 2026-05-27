@@ -141,8 +141,7 @@ class Image_Kit_Module_Orphan_Importer extends Image_Kit_Module {
 	public function render_tab_content(): void {
 		?>
 		<div class="ik-panel ik-scan-config" id="ik-oi-config">
-			<h3><?php esc_html_e( 'Scan for Orphan Files', 'media-cleanup-kit' ); ?></h3>
-			<p><?php esc_html_e( 'Scans uploads for image files not in the media library. Thumbnail variants are grouped with their originals.', 'media-cleanup-kit' ); ?></p>
+			<?php $this->render_panel_header(); ?>
 			<p>
 				<button type="button" id="ik-oi-scan" class="button button-primary"><?php esc_html_e( 'Scan for Orphan Files', 'media-cleanup-kit' ); ?></button>
 			</p>

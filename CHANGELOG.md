@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.37 - 2026-05-27
+
+### Changed
+- **Consistent per-tool panel header across every module.** Each tool's scan-controls box now opens with an `<h2>` heading that exactly matches the tab name, followed by a descriptive subheading sourced from the module's `get_description()`. Replaces the previous mix of stray `<h3>` headings (Restore Full Size, Repair Image Blocks, Import Orphan Files, Flatten Uploads) and inline descriptions inside or above the box (Find Broken Images, Delete Unused Files, Attach Unparented Media). Implemented as a single `render_panel_header()` helper on the abstract `Image_Kit_Module` base so the eight modules stay in lockstep. The auto-rendered description that used to appear above each tab's box was removed to avoid duplication. Dynamic counts and paths (broken-images post count, unused-cleaner uploads path, reattach unattached count) were retained as a separate `.ik-panel-status` line below the static header.
+
 ## 1.0.36 - 2026-05-26
 
 ### Changed

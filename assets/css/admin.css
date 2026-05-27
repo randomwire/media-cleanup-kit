@@ -120,6 +120,21 @@
 	font-size: 16px;
 }
 
+.ik-panel-title {
+	margin: 0 0 4px;
+	font-size: 16px;
+}
+
+.ik-panel-description {
+	margin: 0 0 16px;
+	color: #50575e;
+}
+
+.ik-panel-status {
+	margin: 0 0 12px;
+	color: #50575e;
+}
+
 .ik-panel-reset {
 	background: #f6f7f7;
 	border-color: #dcdcde;
