@@ -26,7 +26,7 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 	}
 
 	public function get_description(): string {
-		return __( 'Find post-content and featured images below a configurable resolution threshold (scan and report only).', 'media-cleanup-kit' );
+		return __( 'Find images below a configurable resolution threshold, then optionally replace them with higher-resolution originals matched via the bundled photo-match workflow.', 'media-cleanup-kit' );
 	}
 
 	public function register_ajax_handlers(): void {
@@ -256,7 +256,7 @@ class Image_Kit_Module_Low_Resolution extends Image_Kit_Module {
 					printf(
 						/* translators: %s: path to photo-match.py inside the plugin */
 						esc_html__( 'The script ships with the plugin at %s. Export your source photos (e.g. from Apple Photos) into ./exported-photos/ first.', 'media-cleanup-kit' ),
-						'<code>' . esc_html( 'wp-content/plugins/image-kit/tools/photo-match.py' ) . '</code>'
+						'<code>' . esc_html( 'wp-content/plugins/media-cleanup-kit/tools/photo-match.py' ) . '</code>'
 					);
 					?>
 				</p>

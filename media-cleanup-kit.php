@@ -3,7 +3,7 @@
  * Plugin Name:       Media Cleanup Kit
  * Plugin URI:        https://github.com/randomwire/media-cleanup-kit
  * Description:       Tools for cleaning up large WordPress media libraries — find broken images, restore full-size variants, repair image blocks, flatten uploads, import orphan files, delete unused files, replace low-resolution images, and attach unparented media.
- * Version:           1.0.37
+ * Version:           1.0.39
  * Requires at least: 5.0
  * Requires PHP:      7.4
  * Author:            David Gilbert
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'IMAGE_KIT_VERSION', '1.0.37' );
+define( 'IMAGE_KIT_VERSION', '1.0.39' );
 define( 'IMAGE_KIT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'IMAGE_KIT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'IMAGE_KIT_PLUGIN_FILE', __FILE__ );

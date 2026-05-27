@@ -300,36 +300,24 @@
 
 			const applyBtn = toolbarEl.querySelector('.ik-scan-apply-btn');
 			if (applyBtn) {
-				// Two-step inline confirmation when more than one row is selected.
 				// Single-row apply fires immediately (the selection IS the
-				// deliberate action). Mirrors the Discard pattern — sidesteps
-				// browsers that silently suppress window.confirm().
-				const originalApplyLabel = applyBtn.textContent;
-				let applyArmed = false;
-				let applyArmTimer = null;
-				const disarmApply = function () {
-					applyArmed = false;
-					applyBtn.textContent = originalApplyLabel;
-					applyBtn.classList.remove('ik-scan-apply-armed');
-					if (applyArmTimer) { clearTimeout(applyArmTimer); applyArmTimer = null; }
-				};
+				// deliberate action). Multi-row goes through the shared
+				// confirmation modal — avoids window.confirm(), which modern
+				// browsers can silently suppress.
 				applyBtn.addEventListener('click', function () {
 					if (state.selection.size <= 1) {
 						startBulkApply();
 						return;
 					}
-					if (!applyArmed) {
-						applyArmed = true;
-						const msg = cfg.apply.confirmMessage
-							? cfg.apply.confirmMessage(state.selection.size)
-							: 'Apply ' + state.selection.size + ' selected items? This cannot be undone.';
-						applyBtn.textContent = 'Click again — ' + msg;
-						applyBtn.classList.add('ik-scan-apply-armed');
-						applyArmTimer = setTimeout(disarmApply, 6000);
-						return;
-					}
-					disarmApply();
-					startBulkApply();
+					const msg = cfg.apply.confirmMessage
+						? cfg.apply.confirmMessage(state.selection.size)
+						: 'Apply ' + state.selection.size + ' selected items? This cannot be undone.';
+					window.imageKitModal.confirm({
+						title:        'Apply selected?',
+						message:      msg,
+						confirmLabel: cfg.apply.confirmLabel || 'Apply',
+						danger:       true,
+					}).then(function (ok) { if (ok) startBulkApply(); });
 				});
 			}
 
@@ -338,30 +326,16 @@
 
 			const discardBtn = toolbarEl.querySelector('.ik-scan-discard-btn');
 			if (discardBtn) {
-				// Two-step inline confirmation: avoids window.confirm(), which
-				// modern Chromium/WebKit can silently suppress for users who
-				// have dismissed prior dialogs on the same origin (that bug
-				// made the Discard button appear inert).
-				const originalLabel = discardBtn.textContent;
-				let armed = false;
-				let armTimer = null;
-				const disarm = function () {
-					armed = false;
-					discardBtn.textContent = originalLabel;
-					discardBtn.classList.remove('ik-scan-discard-armed');
-					if (armTimer) { clearTimeout(armTimer); armTimer = null; }
-				};
 				discardBtn.addEventListener('click', function () {
-					if (!armed) {
-						armed = true;
-						discardBtn.textContent = 'Click again to discard';
-						discardBtn.classList.add('ik-scan-discard-armed');
-						armTimer = setTimeout(disarm, 4000);
-						return;
-					}
-					disarm();
-					if (cfg.onDiscard) cfg.onDiscard();
-					reset();
+					window.imageKitModal.confirm({
+						title:        'Discard scan results?',
+						message:      'Clear the current scan results from this page. You can re-run the scan at any time.',
+						confirmLabel: 'Discard',
+					}).then(function (ok) {
+						if (!ok) return;
+						if (cfg.onDiscard) cfg.onDiscard();
+						reset();
+					});
 				});
 			}
 		}

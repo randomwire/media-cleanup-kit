@@ -88,6 +88,16 @@ class Image_Kit_Admin_Page {
 			true
 		);
 
+		// Shared confirmation modal — defines window.imageKitModal.
+		// Used by scan-ui (Apply / Discard gates) and low-resolution.
+		wp_enqueue_script(
+			'image-kit-modal',
+			IMAGE_KIT_PLUGIN_URL . 'assets/js/modal.js',
+			array(),
+			IMAGE_KIT_VERSION,
+			true
+		);
+
 		wp_localize_script( 'image-kit-admin', 'imageKit', array(
 			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 			'nonce'   => wp_create_nonce( self::NONCE_ACTION ),

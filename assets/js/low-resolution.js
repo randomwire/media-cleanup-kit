@@ -336,9 +336,13 @@
 				showApplyErrors('Select at least one match to apply.', []);
 				return;
 			}
-			if (!confirm('Apply ' + selected.length + ' replacement(s)? Originals will be backed up to wp-content/uploads/image-kit-backup/.')) {
-				return;
-			}
+			const ok = await window.imageKitModal.confirm({
+				title:        'Apply replacements?',
+				message:      'Apply ' + selected.length + ' replacement(s)? Originals will be backed up to wp-content/uploads/image-kit-backup/.',
+				confirmLabel: 'Apply',
+				danger:       true,
+			});
+			if (!ok) return;
 
 			applyBtn.disabled = true;
 			applyProgress.style.display = '';
@@ -379,7 +383,18 @@
 
 	if (cleanupBtn) {
 		cleanupBtn.addEventListener('click', function () {
-			if (!confirm('Delete wp-content/uploads/' + matchedDirName + '/ on the server? Backups are kept.')) return;
+			window.imageKitModal.confirm({
+				title:        'Delete matched-photos directory?',
+				message:      'Delete wp-content/uploads/' + matchedDirName + '/ on the server? Backups are kept.',
+				confirmLabel: 'Delete',
+				danger:       true,
+			}).then(function (ok) {
+				if (!ok) return;
+				runCleanup();
+			});
+		});
+
+		const runCleanup = function () {
 			clearApplyErrors();
 			cleanupBtn.disabled = true;
 			cleanupBtn.textContent = 'Deleting…';
@@ -401,6 +416,6 @@
 				cleanupBtn.textContent = 'Delete matched-photos directory';
 				showApplyErrors('Cleanup failed: ' + err.message, []);
 			});
-		});
+		};
 	}
 })();

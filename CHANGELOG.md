@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.39 - 2026-05-27
+
+### Added
+- **New module: Replace Flickr Images.** Integrates the standalone Flickr Upgrader plugin's functionality into Media Cleanup Kit, following the exact scan → handoff → apply shape used by Replace Low-Res Images. Scans posts for Gutenberg `wp:image` blocks whose `<img src>` matches the Flickr filename pattern (`{photo_id}_{secret}_{size_suffix}.{ext}`) and skips ones already at the original `_o` suffix. Exports a CSV (`flickr-images.csv`) that feeds the bundled `tools/flickr-fetch.py` CLI, which queries `flickr.photos.getSizes` for each unique photo_id and downloads the largest available version with adaptive rate limiting, exponential backoff, and fast resume. After the user rsyncs the downloads into `wp-content/uploads/flickr-replacements/`, the module scans that drop directory, resolves each file's photo_id prefix back to an existing attachment (via `_wp_attached_file` LIKE lookup, handling both year/month-subfolder and uploads-root layouts), and applies the replacement per row or in bulk. Apply chain: preflight → back up original to `wp-content/uploads/image-kit-backup/{attachment_id}/` → `Image_Kit_Core_Thumbnail_Regenerator::replace_file_in_place()` (shared with Replace Low-Res Images, with thumbnail-size reduction enabled to avoid web-request stalls on full-size regen) → rewrite every referencing post's `wp:image` block (sizeSlug → "full", `<img src>` to new URL, `width`/`height` updated to new intrinsic dimensions from the regenerated metadata, `size-*` class on `<figure>` normalised to `size-full`). Drop-directory cleanup button removes `flickr-replacements/` after path-containment checks. All confirmations go through the shared `imageKitModal`. Transient-only state — no custom DB table — matching the rest of MCK. Supersedes the standalone Flickr Upgrader plugin; existing installs can be deactivated after upgrading (no data migration — clean cut).
+
+### Fixed
+- **Replace Low-Res Images: stale plugin path in the handoff instructions.** Step 2 of the handoff panel told the user the photo-match script lived at `wp-content/plugins/image-kit/tools/photo-match.py` — a leftover from before the 1.0.36 rename. Corrected to `wp-content/plugins/media-cleanup-kit/tools/photo-match.py`.
+- Replace Low-Res Images description string updated to accurately describe the full scan + replace workflow (was previously labelled "scan and report only").
+
+## 1.0.38 - 2026-05-27
+
+### Changed
+- **Replaced two-step button confirmation + `window.confirm()` with an in-plugin modal.** Destructive actions previously used two awkward patterns: a two-step "arm the button" gate in the scan-UI helper (multi-row Apply turned amber with "Click again — …", 6-second auto-disarm; Discard had the same shape on a 4-second timer) and `window.confirm()` calls for the Replace Low-Res Apply and Cleanup actions. Both existed to work around modern Chromium/WebKit silently suppressing `window.confirm()` for users who had dismissed an earlier dialog on the same origin (the bug that originally made Discard appear inert in 1.0.28 and Apply in 1.0.34). New shared `assets/js/modal.js` defines a Promise-based `window.imageKitModal.confirm({ title, message, confirmLabel, danger })` that opens a styled, focus-trapped `role="alertdialog"` with backdrop, ESC, close (×), and Cancel all dismissing it. Single-row Apply still fires immediately (the selection IS the deliberate action); the modal only gates the four cases that had a confirmation today. Per-module config keys (`apply.confirmMessage`, `onDiscard`) are unchanged, so module JS files were not touched.
+
 ## 1.0.37 - 2026-05-27
 
 ### Changed

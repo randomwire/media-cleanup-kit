@@ -5,19 +5,19 @@ Tags: media, images, cleanup, broken images, attachments
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.37
+Stable tag: 1.0.39
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Eight tools for cleaning up a large WordPress media library: find broken images, restore full-size variants, repair image blocks, flatten uploads, import orphan files, delete unused files, replace low-resolution images, and attach unparented media.
+Nine tools for cleaning up a large WordPress media library: find broken images, restore full-size variants, repair image blocks, flatten uploads, import orphan files, delete unused files, replace low-resolution images, replace embedded Flickr images, and attach unparented media.
 
 == Description ==
 
-**Media Cleanup Kit** is a single admin page that bundles eight focused tools for cleaning up the kind of mess that builds up in a media library over years of editing — broken references in post content, downsized images that should be full-size, files on disk that aren't in the library, attachments that aren't attached to any post, low-resolution scans you want to replace with higher-quality originals.
+**Media Cleanup Kit** is a single admin page that bundles nine focused tools for cleaning up the kind of mess that builds up in a media library over years of editing — broken references in post content, downsized images that should be full-size, files on disk that aren't in the library, attachments that aren't attached to any post, low-resolution scans you want to replace with higher-quality originals.
 
 Every tool follows the same flow: **scan → review → apply**, with a results table that supports sorting, filtering, full-text search, per-row inspection, per-row apply, bulk apply, and CSV export. Destructive actions create per-post HTML backups before mutating; pending-review workflows survive page reloads.
 
-= The eight tools =
+= The nine tools =
 
 * **Find Broken Images** — Scan posts for `<img>` references whose underlying file is missing on disk. Per-row or bulk Remove strips the broken reference (keeping a timestamped HTML backup of the post). Handles Gutenberg blocks (wp:image, wp:gallery, wp:cover, wp:media-text) and raw `<img>` tags.
 * **Restore Full Size** — Find images displayed at a sized variant (300x200, scaled, etc.) when a larger original exists in the media library, and swap them for the full-size version. Interactive candidate picker for ambiguous matches. Pending-review workflow.
@@ -26,6 +26,7 @@ Every tool follows the same flow: **scan → review → apply**, with a results 
 * **Import Orphan Files** — Find image files in the uploads directory that aren't in the media library and import them as new attachments (with auto-generated thumbnails).
 * **Delete Unused Files** — Find image files (and grouped thumbnail variants) that aren't referenced anywhere in WordPress — post content, featured images, Gutenberg blocks, gallery shortcodes, custom meta — and safely delete them.
 * **Replace Low-Res Images** — Find images below a configurable resolution threshold. Generates an rsync hand-off so you can match them against a folder of higher-resolution originals on your workstation using the bundled `tools/photo-match.py` perceptual-hashing CLI, then re-upload the matches via the plugin.
+* **Replace Flickr Images** — Scan posts for Gutenberg image blocks whose `<img src>` still points at a Flickr-hosted size variant, then hand the list off to the bundled `tools/flickr-fetch.py` CLI to download the largest available version via the Flickr API. After you rsync the downloads into `wp-content/uploads/flickr-replacements/`, the plugin replaces each file in place (with backup + thumbnail regeneration) and updates the referencing block JSON with the new intrinsic dimensions.
 * **Attach Unparented Media** — Find attachments with no parent post and attach them to the first post that references them, via featured image, content URL, or classic gallery shortcode.
 
 = Safety =
@@ -71,7 +72,7 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 
 == Screenshots ==
 
-1. The Media Cleanup Kit admin page with the left sidebar showing all eight tools.
+1. The Media Cleanup Kit admin page with the left sidebar showing all nine tools.
 2. Find Broken Images results table — sortable, filterable, with per-row Remove and bulk apply.
 3. Restore Full Size review panel with before/after thumbnails and the candidate picker.
 4. Repair Image Blocks audit with the proposed block JSON and per-replacement exclusion checkboxes.
@@ -79,6 +80,14 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 6. The shared lightbox showing a before/after compare view.
 
 == Changelog ==
+
+= 1.0.39 =
+* New module: **Replace Flickr Images**. Scans posts for Gutenberg image blocks whose source still points at a Flickr-hosted size variant, exports a CSV for the bundled `tools/flickr-fetch.py` CLI (which uses the Flickr API to download the largest available version), then re-ingests the downloads from `wp-content/uploads/flickr-replacements/` and applies them with backup + thumbnail regeneration + block JSON cleanup (sizeSlug → full, new intrinsic dimensions). Same scan → handoff → apply shape as Replace Low-Res Images. Supersedes the standalone Flickr Upgrader plugin.
+* Fixed: Replace Low-Res Images handoff instructions referenced the pre-rename plugin path (`wp-content/plugins/image-kit/…`). Corrected to `wp-content/plugins/media-cleanup-kit/…`.
+* Fixed: Replace Low-Res Images description text accurately describes the scan + replace flow (was previously labelled "scan and report only").
+
+= 1.0.38 =
+* Replaced the two-step "click again to confirm" gates and the remaining `window.confirm()` dialogs with a built-in confirmation modal. Single-row Apply still fires immediately; multi-row Apply, Discard, and the Replace Low-Res apply/cleanup actions now open a styled modal you can dismiss with Cancel, ESC, the close button, or a backdrop click.
 
 = 1.0.37 =
 * Consistent per-tool panel header: every module now renders an `<h2>` heading matching the tab name plus a descriptive subheading inside the scan-controls box. Removes inconsistent `<h3>` / inline-`<p>` patterns and the duplicate description that previously appeared above the box.
@@ -123,6 +132,12 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 For the full version-by-version history see the `CHANGELOG.md` file in the GitHub repository.
 
 == Upgrade Notice ==
+
+= 1.0.39 =
+Adds a Replace Flickr Images module that supersedes the standalone Flickr Upgrader plugin. If you have Flickr Upgrader installed, you can deactivate it after this upgrade.
+
+= 1.0.38 =
+UI polish — destructive actions now use an in-plugin confirmation modal instead of the two-step "click again" gate and the suppressible browser `confirm()` dialog. No data or behaviour changes.
 
 = 1.0.37 =
 UI polish only — every tool tab now shows a uniform heading + subheading inside its scan-controls box. No data or behaviour changes.

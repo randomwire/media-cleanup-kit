@@ -108,6 +108,7 @@ class Image_Kit_Plugin {
 			'reattach'        => 'Reattach',
 			'unused-cleaner'  => 'Unused_Cleaner',
 			'low-resolution'  => 'Low_Resolution',
+			'flickr-upgrader' => 'Flickr_Upgrader',
 		);
 
 		foreach ( $module_dirs as $dir => $class_suffix ) {
