@@ -5,7 +5,7 @@ Tags: media, images, cleanup, broken images, attachments
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.43
+Stable tag: 1.0.44
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,9 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 
 == Changelog ==
 
+= 1.0.44 =
+* Fixed: Attach Unparented Media's "Matches found: X" counter was actually counting every scanned attachment (including no-match ones) instead of only those where a candidate parent was proposed. Delete Unused Files had the same bug for the same reason ("Unused files found" was counting all scanned files including the used ones). Both now report the actionable count via a predicate on the `_items` counter.
+
 = 1.0.43 =
 * Attach Unparented Media: reduced scan batch size from 50 → 20 so the progress bar and "Matches found" counter start moving sooner. The scanner is already a fixed 2 DB queries per batch (independent of batch size), so the throughput cost is negligible.
 
@@ -144,6 +147,9 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 For the full version-by-version history see the `CHANGELOG.md` file in the GitHub repository.
 
 == Upgrade Notice ==
+
+= 1.0.44 =
+Bug fix — "Matches found" / "Unused files found" counters now report the actionable count instead of total items scanned.
 
 = 1.0.43 =
 UI polish — Attach Unparented Media scans in batches of 20 (was 50) so progress is visible sooner.

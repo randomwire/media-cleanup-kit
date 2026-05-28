@@ -28,7 +28,11 @@
 		},
 
 		counters: [
-			{ key: '_items', label: 'Unused files found' },
+			// Only count actually-unused files — the scanner returns every
+			// scanned file with an is_used flag (so the "Used only" filter
+			// tab can work), and a naive items.length would equal "files
+			// scanned", not "unused files found".
+			{ key: '_items', label: 'Unused files found', predicate: function (r) { return !r.is_used; } },
 		],
 
 		columns: [

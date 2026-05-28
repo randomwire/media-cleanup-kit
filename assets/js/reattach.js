@@ -42,7 +42,11 @@
 		},
 
 		counters: [
-			{ key: '_items', label: 'Matches found' },
+			// Only count rows where a candidate parent was actually proposed —
+			// the scanner returns every unattached attachment (including
+			// no-match ones) so a naive items.length would equal "attachments
+			// scanned", not "matches found".
+			{ key: '_items', label: 'Matches found', predicate: function (r) { return !!r.parent_id; } },
 		],
 
 		columns: [

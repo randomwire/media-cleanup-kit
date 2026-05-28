@@ -707,10 +707,18 @@
 					Object.keys(d.progress).forEach(function (k) { setCounter(k, d.progress[k]); });
 				}
 				// Reserved client-side counter: `_items` reports the cumulative
-				// count of rows the user can see, derived from state.items.length.
-				// Modules opt in by including { key: '_items', label: '…' } in
-				// their counters config. No-op for modules that don't.
-				setCounter('_items', state.items.length);
+				// count of rows derived from state.items. Modules opt in by
+				// including { key: '_items', label: '…' } in their counters
+				// config. If the counter config also supplies a `predicate`
+				// function, only matching items are counted — used by modules
+				// like reattach and unused-cleaner whose items list contains
+				// non-actionable rows (no-match attachments, used files) that
+				// the "found" label should not be claiming credit for.
+				const itemsCounter = cfg.counters.find(function (c) { return c.key === '_items'; });
+				const itemsCount = (itemsCounter && typeof itemsCounter.predicate === 'function')
+					? state.items.filter(itemsCounter.predicate).length
+					: state.items.length;
+				setCounter('_items', itemsCount);
 				if (Array.isArray(d.log_lines)) {
 					d.log_lines.forEach(function (line) {
 						const text = line.title + (line.detail ? ' — ' + line.detail : '');

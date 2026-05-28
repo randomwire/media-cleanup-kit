@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.44 - 2026-05-27
+
+### Fixed
+- **"Matches found" / "Unused files found" counters were counting every scanned row, not just actionable ones.** Introduced in 1.0.40 alongside the new `_items` counter. For most modules the scanner only returns actionable rows so `state.items.length` is correct, but two modules return mixed lists for filter purposes: Attach Unparented Media returns every unattached attachment (matched + no-match — the "No match" filter tab needs them), and Delete Unused Files returns every scanned file (used + unused — the "Used only" filter tab needs them). Both counters were therefore overstating by counting the non-actionable rows. Fixed by adding an optional `predicate` callback to `_items` counter configs in the scan-UI helper: when present, only items matching the predicate are counted. Reattach now filters on `!!r.parent_id`; unused-cleaner filters on `!r.is_used`. The progress-bar fraction and the table contents are unchanged — only the headline counter is corrected.
+
 ## 1.0.43 - 2026-05-27
 
 ### Changed
