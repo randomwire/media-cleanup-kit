@@ -70,7 +70,7 @@
 		filters: [
 			{ key: 'all',     label: 'All',     predicate: function () { return true; } },
 			{ key: 'pending', label: 'Pending', predicate: function (r) { return !r._relocated; } },
-			{ key: 'applied', label: 'Done',    predicate: function (r) { return !!r._relocated; } },
+			{ key: 'applied', label: 'Relocated', predicate: function (r) { return !!r._relocated; } },
 		],
 
 		searchableFields: ['relative_path', 'target_filename'],

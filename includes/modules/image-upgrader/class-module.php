@@ -489,7 +489,7 @@ class Image_Kit_Module_Image_Upgrader extends Image_Kit_Module {
 				<?php endforeach; ?>
 			</fieldset>
 			<p>
-				<button type="button" id="ik-iu-start-scan" class="button button-primary"><?php esc_html_e( 'Scan', 'media-cleanup-kit' ); ?></button>
+				<button type="button" id="ik-iu-start-scan" class="button button-primary"><?php esc_html_e( 'Scan for Resized Images', 'media-cleanup-kit' ); ?></button>
 			</p>
 		</div>
 

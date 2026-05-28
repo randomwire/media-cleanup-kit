@@ -140,7 +140,7 @@ class Image_Kit_Module_Reattach extends Image_Kit_Module {
 			</p>
 			<?php if ( $count > 0 ) : ?>
 				<p>
-					<button id="ik-ra-scan" class="button button-primary"><?php esc_html_e( 'Scan Unattached Media', 'media-cleanup-kit' ); ?></button>
+					<button id="ik-ra-scan" class="button button-primary"><?php esc_html_e( 'Scan for Unattached Media', 'media-cleanup-kit' ); ?></button>
 				</p>
 			<?php else : ?>
 				<p><em><?php esc_html_e( 'All media is attached. Nothing to do here.', 'media-cleanup-kit' ); ?></em></p>

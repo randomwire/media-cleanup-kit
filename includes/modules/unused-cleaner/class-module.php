@@ -145,7 +145,7 @@ class Image_Kit_Module_Unused_Cleaner extends Image_Kit_Module {
 		<div class="ik-panel ik-scan-config" id="ik-uc-config">
 			<?php $this->render_panel_header(); ?>
 			<p>
-				<button id="ik-uc-scan-btn" class="button button-primary"><?php esc_html_e( 'Scan Uploads', 'media-cleanup-kit' ); ?></button>
+				<button id="ik-uc-scan-btn" class="button button-primary"><?php esc_html_e( 'Scan for Unused Files', 'media-cleanup-kit' ); ?></button>
 			</p>
 			<p class="ik-panel-status">
 				<?php

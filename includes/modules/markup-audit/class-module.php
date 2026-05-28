@@ -388,7 +388,7 @@ class Image_Kit_Module_Markup_Audit extends Image_Kit_Module {
 				<?php endforeach; ?>
 			</fieldset>
 			<p>
-				<button type="button" id="ik-ma-start" class="button button-primary"><?php esc_html_e( 'Run Audit', 'media-cleanup-kit' ); ?></button>
+				<button type="button" id="ik-ma-start" class="button button-primary"><?php esc_html_e( 'Scan for Markup Issues', 'media-cleanup-kit' ); ?></button>
 			</p>
 		</div>
 

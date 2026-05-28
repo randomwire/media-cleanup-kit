@@ -124,7 +124,7 @@ class Image_Kit_Module_Relocator extends Image_Kit_Module {
 		<div class="ik-panel ik-scan-config" id="ik-rel-config">
 			<?php $this->render_panel_header(); ?>
 			<p>
-				<button type="button" id="ik-rel-scan" class="button button-primary"><?php esc_html_e( 'Scan for Images', 'media-cleanup-kit' ); ?></button>
+				<button type="button" id="ik-rel-scan" class="button button-primary"><?php esc_html_e( 'Scan for Subdirectory Images', 'media-cleanup-kit' ); ?></button>
 			</p>
 		</div>
 

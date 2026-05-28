@@ -821,6 +821,13 @@ button:disabled {
 	white-space: nowrap;
 }
 
+/* Inactive sort glyph on sortable column headers — visible but muted, so the
+   active sort column's ▴/▾ stands out clearly. */
+.ik-scan-sort-inactive {
+	color: #a7aaad;
+	font-size: 0.9em;
+}
+
 /* ── Lightbox ── */
 
 #image-kit-app img.ik-thumb,

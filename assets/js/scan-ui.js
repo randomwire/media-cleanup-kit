@@ -312,10 +312,14 @@
 					const msg = cfg.apply.confirmMessage
 						? cfg.apply.confirmMessage(state.selection.size)
 						: 'Apply ' + state.selection.size + ' selected items? This cannot be undone.';
+					// Derive the modal title + button label from the same verb,
+					// so "Remove Selected" opens "Remove selected?" with a red
+					// Remove button. Falls back to "Apply" for the generic case.
+					const verb = cfg.apply.confirmLabel || cfg.perRowApplyLabel || 'Apply';
 					window.imageKitModal.confirm({
-						title:        'Apply selected?',
+						title:        verb + ' selected?',
 						message:      msg,
-						confirmLabel: cfg.apply.confirmLabel || 'Apply',
+						confirmLabel: verb,
 						danger:       true,
 					}).then(function (ok) { if (ok) startBulkApply(); });
 				});
@@ -348,8 +352,12 @@
 			cfg.columns.forEach(function (c) {
 				let arrow = '';
 				if (c.sortable) {
+					// Active sort column: show direction. Inactive sortable
+					// columns: show a muted both-direction indicator so the
+					// header is discoverable as sortable without claiming it
+					// is currently the sort key.
 					if (state.sortColumn === c.key) arrow = state.sortAsc ? ' ▴' : ' ▾';
-					else arrow = ' ▾';
+					else arrow = ' <span class="ik-scan-sort-inactive">⇅</span>';
 				}
 				const sortCls = c.sortable ? 'ik-scan-sortable" data-sort="' + escAttr(c.key) : '';
 				html += '<th class="' + sortCls + '">' + esc(c.label) + arrow + '</th>';
@@ -427,7 +435,7 @@
 					(selectable ? '' : ' disabled') + '></th>';
 				html += '<td class="ik-scan-expand-col">';
 				if (cfg.rowDetail) {
-					html += '<button type="button" class="button-link ik-scan-expand-toggle">▶</button>';
+					html += '<button type="button" class="button-link ik-scan-expand-toggle">▸</button>';
 				}
 				html += '</td>';
 				cfg.columns.forEach(function (c) {
@@ -483,10 +491,10 @@
 							cell.innerHTML = cfg.rowDetail(item);
 							if (cfg.bindRowDetail) cfg.bindRowDetail(cell, item);
 							detailRow.style.display = '';
-							btn.textContent = '▼';
+							btn.textContent = '▾';
 						} else {
 							detailRow.style.display = 'none';
-							btn.textContent = '▶';
+							btn.textContent = '▸';
 						}
 					});
 				});

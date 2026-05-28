@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.42 - 2026-05-27
+
+### Changed
+- **Scan-flow UI polish pass.** Five small inconsistencies fixed in one pass: (1) the primary scan button now uses the uniform "Scan for &lt;X&gt;" form across all nine modules, replacing outliers "Scan" (image-upgrader), "Run Audit" (markup-audit), "Scan for Images" (relocator), "Scan Uploads" (unused-cleaner), and "Scan Unattached Media" (reattach). (2) The bulk-apply confirmation modal title now derives from the per-module action verb so Find Broken Images shows "Remove selected?" with a red Remove button, Delete Unused Files shows "Delete selected?", Attach Unparented Media shows "Attach selected?", etc. — previously every module saw the generic "Apply selected?" headline even when the action was clearly something else. (3) Flatten Uploads' completed-items filter tab now reads "Relocated" (was "Done", the lone outlier from the past-tense action-verb convention used by every other module). (4) Inactive sortable column headers now render a muted both-direction indicator (`⇅`, 30%-opacity grey) instead of the same `▾` glyph the active sort column uses — previously every sortable header looked identical, making it impossible to tell which column was the current sort. (5) Row expand/collapse chevrons (`▸` / `▾`) now share the small-triangle glyph family used by the sort arrows; were previously `▶` / `▼` (large solid triangles), visually mismatched in the same row.
+
 ## 1.0.41 - 2026-05-27
 
 ### Changed

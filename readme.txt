@@ -5,7 +5,7 @@ Tags: media, images, cleanup, broken images, attachments
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.41
+Stable tag: 1.0.42
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,9 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 
 == Changelog ==
 
+= 1.0.42 =
+* Scan-flow UI polish pass: every module's primary scan button now uses the uniform "Scan for <X>" form (was a mix of "Scan", "Run Audit", "Scan Uploads", etc.); confirmation modal title now mirrors the per-module action verb ("Remove selected?" / "Delete selected?" / "Attach selected?") instead of always saying "Apply selected?"; Flatten Uploads' completed-items filter tab now reads "Relocated" (was "Done", the only outlier from the past-tense action-verb convention); inactive sortable column headers show a muted up/down indicator so the active sort column's arrow is actually distinguishable; expand/collapse row chevrons now use the same triangle weight as the sort arrows.
+
 = 1.0.41 =
 * Scan-progress bar now starts at `0` instead of `0%`, so the format is consistent with the `X / Y` count the first batch response switches to — no brief "0%" flash before the count appears.
 
@@ -138,6 +141,9 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 For the full version-by-version history see the `CHANGELOG.md` file in the GitHub repository.
 
 == Upgrade Notice ==
+
+= 1.0.42 =
+UI polish — uniform "Scan for X" button labels across modules, action-verb modal titles, fixed-up sort indicators, glyph-consistent expand chevrons.
 
 = 1.0.41 =
 UI polish — scan-progress bar starts at `0` instead of `0%` so it switches cleanly to the `X / Y` count on the first batch.
