@@ -81,7 +81,7 @@
 		},
 
 		counters: [
-			{ key: 'posts_scanned', label: 'Posts scanned' },
+			{ key: '_items', label: 'Flickr images found' },
 		],
 
 		columns: [

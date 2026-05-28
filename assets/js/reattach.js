@@ -42,8 +42,7 @@
 		},
 
 		counters: [
-			{ key: 'attachments_scanned', label: 'Attachments scanned' },
-			{ key: 'matches_found',       label: 'Matches found' },
+			{ key: '_items', label: 'Matches found' },
 		],
 
 		columns: [

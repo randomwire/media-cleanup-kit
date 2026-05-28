@@ -111,7 +111,7 @@
 		},
 
 		counters: [
-			{ key: 'posts_scanned', label: 'Posts scanned' },
+			{ key: '_items', label: 'Low-res images found' },
 		],
 
 		columns: [

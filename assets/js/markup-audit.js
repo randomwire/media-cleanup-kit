@@ -180,9 +180,8 @@
 		},
 
 		counters: [
-			{ key: 'posts_scanned',   label: 'Posts audited' },
-			{ key: 'images_replaced', label: 'Issues found' },
-			{ key: 'images_skipped',  label: 'Skipped' },
+			{ key: '_items',         label: 'Issues found' },
+			{ key: 'images_skipped', label: 'Skipped' },
 		],
 
 		columns: [

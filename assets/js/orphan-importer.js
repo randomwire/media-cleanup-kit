@@ -50,7 +50,7 @@
 		},
 
 		counters: [
-			{ key: 'files_compared', label: 'Files compared' },
+			{ key: '_items', label: 'Orphan files found' },
 		],
 
 		columns: [

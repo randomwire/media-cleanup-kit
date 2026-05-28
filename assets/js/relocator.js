@@ -28,8 +28,7 @@
 		},
 
 		counters: [
-			{ key: 'attachments_checked', label: 'Attachments checked' },
-			{ key: 'to_relocate',         label: 'To relocate' },
+			{ key: '_items', label: 'Images to relocate' },
 		],
 
 		columns: [

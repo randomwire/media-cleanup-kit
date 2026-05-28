@@ -27,7 +27,7 @@
 		},
 
 		counters: [
-			{ key: 'posts_scanned', label: 'Posts checked' },
+			{ key: '_items', label: 'Broken images found' },
 		],
 
 		columns: [

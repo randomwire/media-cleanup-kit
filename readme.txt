@@ -5,7 +5,7 @@ Tags: media, images, cleanup, broken images, attachments
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.39
+Stable tag: 1.0.40
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,9 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 
 == Changelog ==
 
+= 1.0.40 =
+* Scan-progress strip: replaced the duplicative "Posts scanned / Files scanned / Attachments checked" counter (which restated the progress bar's X / Y fraction) with a per-module "found"-shaped counter that increments as actionable rows arrive — "Broken images found", "Low-res images found", "Matches found", "Flickr images found", etc. Driven entirely client-side from the items the table is already showing, so it's always exactly right; incidentally fixes the relocator's per-batch (non-cumulative) "To relocate" count.
+
 = 1.0.39 =
 * New module: **Replace Flickr Images**. Scans posts for Gutenberg image blocks whose source still points at a Flickr-hosted size variant, exports a CSV for the bundled `tools/flickr-fetch.py` CLI (which uses the Flickr API to download the largest available version), then re-ingests the downloads from `wp-content/uploads/flickr-replacements/` and applies them with backup + thumbnail regeneration + block JSON cleanup (sizeSlug → full, new intrinsic dimensions). Same scan → handoff → apply shape as Replace Low-Res Images. Supersedes the standalone Flickr Upgrader plugin.
 * Fixed: Replace Low-Res Images handoff instructions referenced the pre-rename plugin path (`wp-content/plugins/image-kit/…`). Corrected to `wp-content/plugins/media-cleanup-kit/…`.
@@ -132,6 +135,9 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 For the full version-by-version history see the `CHANGELOG.md` file in the GitHub repository.
 
 == Upgrade Notice ==
+
+= 1.0.40 =
+UI polish — the scan-progress strip now shows "Broken images found", "Low-res images found", "Matches found" etc. instead of the duplicative "Posts scanned" count that restated the progress bar.
 
 = 1.0.39 =
 Adds a Replace Flickr Images module that supersedes the standalone Flickr Upgrader plugin. If you have Flickr Upgrader installed, you can deactivate it after this upgrade.

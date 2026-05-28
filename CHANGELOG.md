@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.40 - 2026-05-27
+
+### Changed
+- **Scan-progress counter is now a per-module "found" total instead of a restated progress fraction.** Every module's scan UI used to render a counter labelled `Posts scanned: 840` (or `Files scanned`, `Attachments checked`, `Files compared`, etc.) immediately below a progress bar that already showed `840 / 1,416` — pure duplication. Replaced with a single per-module counter that reports the cumulative number of actionable rows the scan has produced so far ("Broken images found", "Images found", "Issues found", "Images to relocate", "Orphan files found", "Unused files found", "Low-res images found", "Matches found", "Flickr images found"). Image-upgrader and markup-audit additionally keep their server-driven "Skipped" counter, since that's genuinely different from items found. Implemented as a reserved client-side counter key (`_items`) in `assets/js/scan-ui.js`: after each batch's items are appended to `state.items`, the helper auto-syncs that counter from `state.items.length`. No server contract changes — all nine scanners' AJAX payloads were already returning the items the table needs. Incidentally fixes the long-standing relocator counter bug where `to_relocate` was a per-batch count rather than cumulative.
+
 ## 1.0.39 - 2026-05-27
 
 ### Added

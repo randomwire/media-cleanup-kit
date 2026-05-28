@@ -239,9 +239,8 @@
 		},
 
 		counters: [
-			{ key: 'posts_scanned',   label: 'Posts scanned' },
-			{ key: 'images_replaced', label: 'Images found' },
-			{ key: 'images_skipped',  label: 'Skipped' },
+			{ key: '_items',         label: 'Images found' },
+			{ key: 'images_skipped', label: 'Skipped' },
 		],
 
 		columns: [

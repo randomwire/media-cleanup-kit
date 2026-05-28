@@ -695,6 +695,11 @@
 				if (isPlainObject(d.progress)) {
 					Object.keys(d.progress).forEach(function (k) { setCounter(k, d.progress[k]); });
 				}
+				// Reserved client-side counter: `_items` reports the cumulative
+				// count of rows the user can see, derived from state.items.length.
+				// Modules opt in by including { key: '_items', label: '…' } in
+				// their counters config. No-op for modules that don't.
+				setCounter('_items', state.items.length);
 				if (Array.isArray(d.log_lines)) {
 					d.log_lines.forEach(function (line) {
 						const text = line.title + (line.detail ? ' — ' + line.detail : '');

@@ -28,7 +28,7 @@
 		},
 
 		counters: [
-			{ key: 'files_scanned', label: 'Files scanned' },
+			{ key: '_items', label: 'Unused files found' },
 		],
 
 		columns: [
