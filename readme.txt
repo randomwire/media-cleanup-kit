@@ -5,7 +5,7 @@ Tags: media, images, cleanup, broken images, attachments
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.40
+Stable tag: 1.0.41
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,9 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 
 == Changelog ==
 
+= 1.0.41 =
+* Scan-progress bar now starts at `0` instead of `0%`, so the format is consistent with the `X / Y` count the first batch response switches to — no brief "0%" flash before the count appears.
+
 = 1.0.40 =
 * Scan-progress strip: replaced the duplicative "Posts scanned / Files scanned / Attachments checked" counter (which restated the progress bar's X / Y fraction) with a per-module "found"-shaped counter that increments as actionable rows arrive — "Broken images found", "Low-res images found", "Matches found", "Flickr images found", etc. Driven entirely client-side from the items the table is already showing, so it's always exactly right; incidentally fixes the relocator's per-batch (non-cumulative) "To relocate" count.
 
@@ -135,6 +138,9 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 For the full version-by-version history see the `CHANGELOG.md` file in the GitHub repository.
 
 == Upgrade Notice ==
+
+= 1.0.41 =
+UI polish — scan-progress bar starts at `0` instead of `0%` so it switches cleanly to the `X / Y` count on the first batch.
 
 = 1.0.40 =
 UI polish — the scan-progress strip now shows "Broken images found", "Low-res images found", "Matches found" etc. instead of the duplicative "Posts scanned" count that restated the progress bar.

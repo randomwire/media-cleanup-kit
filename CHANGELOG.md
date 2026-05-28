@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.41 - 2026-05-27
+
+### Changed
+- **Scan-progress text starts at `0` instead of `0%`.** The progress strip used to render `0%` for the brief window between clicking Scan and the first batch response arriving, then switch to the `X / Y` format ("20 / 1,416") and stay there for the rest of the run. The format change was jarring. The initial text now matches the final shape — just a number — so the only thing that animates is the count itself.
+
 ## 1.0.40 - 2026-05-27
 
 ### Changed

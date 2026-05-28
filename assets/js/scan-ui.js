@@ -104,7 +104,7 @@
 			'<h3 class="ik-scan-progress-title">' + esc(cfg.progressTitle || 'Scanning…') + '</h3>' +
 			'<div class="ik-progress ik-scan-progress-bar">' +
 				'<div class="ik-progress-bar"><div class="ik-progress-fill"></div></div>' +
-				'<span class="ik-progress-text">0%</span>' +
+				'<span class="ik-progress-text">0</span>' +
 			'</div>' +
 			'<div class="ik-scan-counters"></div>' +
 			'<div class="ik-log ik-scan-log"></div>' +
@@ -654,7 +654,10 @@
 			containers.progress.style.display = '';
 			logEl.innerHTML = '';
 			cfg.counters.forEach(function (c) { setCounter(c.key, 0); });
-			updateProgress(progressBarEl, 0, 1, '0%');
+			// Start the text at "0" (not "0%") so the format is consistent
+			// with the "X / Y" the first batch response will show — no jarring
+			// flash from "0%" to "20 / 1,416".
+			updateProgress(progressBarEl, 0, 1, '0');
 
 			const gen = state.scanGen;
 			state.isScanning = true;
