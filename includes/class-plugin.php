@@ -65,9 +65,6 @@ class Image_Kit_Plugin {
 			$links[] = '<a href="https://ko-fi.com/randomwire" target="_blank" rel="noopener noreferrer">'
 				. esc_html__( 'Donate', 'media-cleanup-kit' )
 				. '</a>';
-			$links[] = '<a href="https://github.com/randomwire/media-cleanup-kit" target="_blank" rel="noopener noreferrer">'
-				. esc_html__( 'GitHub', 'media-cleanup-kit' )
-				. '</a>';
 		}
 		return $links;
 	}
