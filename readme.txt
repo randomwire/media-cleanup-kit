@@ -5,7 +5,7 @@ Tags: media, images, cleanup, broken images, attachments
 Requires at least: 5.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.42
+Stable tag: 1.0.43
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,9 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 
 == Changelog ==
 
+= 1.0.43 =
+* Attach Unparented Media: reduced scan batch size from 50 → 20 so the progress bar and "Matches found" counter start moving sooner. The scanner is already a fixed 2 DB queries per batch (independent of batch size), so the throughput cost is negligible.
+
 = 1.0.42 =
 * Scan-flow UI polish pass: every module's primary scan button now uses the uniform "Scan for <X>" form (was a mix of "Scan", "Run Audit", "Scan Uploads", etc.); confirmation modal title now mirrors the per-module action verb ("Remove selected?" / "Delete selected?" / "Attach selected?") instead of always saying "Apply selected?"; Flatten Uploads' completed-items filter tab now reads "Relocated" (was "Done", the only outlier from the past-tense action-verb convention); inactive sortable column headers show a muted up/down indicator so the active sort column's arrow is actually distinguishable; expand/collapse row chevrons now use the same triangle weight as the sort arrows.
 
@@ -141,6 +144,9 @@ Deactivate then delete via WordPress. The plugin's uninstall handler drops both 
 For the full version-by-version history see the `CHANGELOG.md` file in the GitHub repository.
 
 == Upgrade Notice ==
+
+= 1.0.43 =
+UI polish — Attach Unparented Media scans in batches of 20 (was 50) so progress is visible sooner.
 
 = 1.0.42 =
 UI polish — uniform "Scan for X" button labels across modules, action-verb modal titles, fixed-up sort indicators, glyph-consistent expand chevrons.

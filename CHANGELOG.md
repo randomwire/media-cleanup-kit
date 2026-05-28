@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
+## 1.0.43 - 2026-05-27
+
+### Changed
+- **Attach Unparented Media: scan batch size reduced from 50 → 20.** On large libraries the user could click Scan, watch the progress bar sit at "0 / N" with "Matches found: 0" for several seconds, and wonder whether anything was happening. The scanner is already only 2 DB queries per batch *regardless* of batch size (per the optimisation in 1.0.33), so the throughput cost of smaller batches is negligible — the win is that the progress bar and matches counter tick up much sooner. Cap (200) and the in-range guard are unchanged.
+
 ## 1.0.42 - 2026-05-27
 
 ### Changed

@@ -51,7 +51,7 @@ class Image_Kit_Module_Reattach extends Image_Kit_Module {
 		wp_localize_script( 'image-kit-reattach', 'imageKitReattach', array(
 			'scanAction'      => $this->ajax_action( 'scan' ),
 			'applyAction'     => $this->ajax_action( 'apply' ),
-			'scanBatchSize'   => 50,
+			'scanBatchSize'   => 20,
 			'unattachedCount' => $scanner->count_unattached(),
 		) );
 	}
@@ -69,10 +69,15 @@ class Image_Kit_Module_Reattach extends Image_Kit_Module {
 			set_time_limit( 120 );
 		}
 
+		// Batch size 20 (was 50): the scanner is already only 2 DB queries per
+		// batch regardless of size — see class-scanner.php docblock — so the
+		// throughput cost of smaller batches is negligible, and the user sees
+		// the "Matches found" counter and progress bar tick up sooner instead
+		// of staring at a stationary "0 / N" for the first chunk.
 		$offset     = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
-		$batch_size = isset( $_POST['batch_size'] ) ? absint( $_POST['batch_size'] ) : 50;
+		$batch_size = isset( $_POST['batch_size'] ) ? absint( $_POST['batch_size'] ) : 20;
 		if ( $batch_size < 1 || $batch_size > 200 ) {
-			$batch_size = 50;
+			$batch_size = 20;
 		}
 
 		$scanner = new Image_Kit_Reattach_Scanner();
