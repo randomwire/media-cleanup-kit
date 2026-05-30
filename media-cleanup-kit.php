@@ -16,6 +16,9 @@
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/includes/updater.php';
+randomwire_init_github_updater( __FILE__ );
+
 define( 'IMAGE_KIT_VERSION', '1.0.44' );
 define( 'IMAGE_KIT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'IMAGE_KIT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

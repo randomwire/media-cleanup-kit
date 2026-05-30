@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Set up Node only when this plugin has a JS build pipeline.
+      - name: Set up Node
+        if: ${{ hashFiles('package.json') != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install JS dependencies
+        if: ${{ hashFiles('package-lock.json') != '' }}
+        run: npm ci
+
+      - name: Verify tag matches plugin header version
+        run: |
+          MAIN=$(grep -lE '^[[:space:]]*\*?[[:space:]]*Plugin Name:' \
+            $(find . -maxdepth 1 -name '*.php' ! -name 'uninstall.php') | head -1)
+          if [ -z "$MAIN" ]; then
+            echo "::error::Could not find the main plugin file"; exit 1
+          fi
+          HV=$(grep -m1 -E '^[[:space:]]*\*?[[:space:]]*Version:' "$MAIN" \
+            | sed -E 's/^[[:space:]]*\*?[[:space:]]*Version:[[:space:]]*//' | tr -d '[:space:]')
+          TAG="${GITHUB_REF_NAME#v}"
+          echo "Main file: $MAIN | header version: $HV | tag: $GITHUB_REF_NAME"
+          if [ "$HV" != "$TAG" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME ($TAG) does not match header version $HV in $MAIN"
+            exit 1
+          fi
+
+      - name: Build distribution zip
+        run: ./build.sh
+
+      - name: Publish Release with zip asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          generate_release_notes: true
